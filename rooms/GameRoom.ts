@@ -10,7 +10,12 @@ export class Player extends Schema {
     @type("number")
     y = Math.floor(Math.random() * 400);
 
-    movement = {
+    velocity = {
+        x: 0,
+        y: 0
+    };
+
+    acceleration = {
         x: 0,
         y: 0
     };
@@ -19,16 +24,17 @@ export class Player extends Schema {
     color = this.colors[Math.floor(Math.random() * this.colors.length)];
 
     movePlayer() {
-        this.x += this.movement.x;
-        this.y += this.movement.y;
+        this.velocity.x = (this.velocity.x + this.acceleration.x) * 0.9;
+        this.x += this.velocity.x;
+
+        this.velocity.y = (this.velocity.y + this.acceleration.y) * 0.9;
+        this.y += this.velocity.y;
     }
 }
 
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
-
-    something = "This attribute won't be sent to the client-side";
 
     createPlayer (id: string) {
         this.players[ id ] = new Player();
@@ -49,7 +55,7 @@ export class GameRoom extends Room<State> {
 
         this.setState(new State());
 
-        this.gameInterval = setInterval(this.gameLoop.bind(this), 60 / 1000);
+        this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }
 
     onJoin (client: Client) {
@@ -69,19 +75,19 @@ export class GameRoom extends Room<State> {
             case "KeyDown": {
                 switch(data.key) {
                     case 37: {
-                        this.state.players[client.sessionId].movement.x = -1;
+                        this.state.players[client.sessionId].acceleration.x = -2;
                         break;
                     }
                     case 38: {
-                        this.state.players[client.sessionId].movement.y = -1;
+                        this.state.players[client.sessionId].acceleration.y = -2;
                         break;
                     }
                     case 39: {
-                        this.state.players[client.sessionId].movement.x = 1;
+                        this.state.players[client.sessionId].acceleration.x = 2;
                         break;
                     }
                     case 40: {
-                        this.state.players[client.sessionId].movement.y = 1;
+                        this.state.players[client.sessionId].acceleration.y = 2;
                         break;
                     }
                 }
@@ -90,23 +96,23 @@ export class GameRoom extends Room<State> {
             case "KeyUp": {
                 switch(data.key) {
                     case 37: {
-                        if(this.state.players[client.sessionId].movement.x == -1)
-                            this.state.players[client.sessionId].movement.x = 0;
+                        if(this.state.players[client.sessionId].acceleration.x == -2)
+                            this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 38: {
-                        if(this.state.players[client.sessionId].movement.y == -1)
-                            this.state.players[client.sessionId].movement.y = 0;
+                        if(this.state.players[client.sessionId].acceleration.y == -2)
+                            this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }
                     case 39: {
-                        if(this.state.players[client.sessionId].movement.x == 1)
-                            this.state.players[client.sessionId].movement.x = 0;
+                        if(this.state.players[client.sessionId].acceleration.x == 2)
+                            this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 40: {
-                        if(this.state.players[client.sessionId].movement.y == 1)
-                            this.state.players[client.sessionId].movement.y = 0;
+                        if(this.state.players[client.sessionId].acceleration.y == 2)
+                            this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }
                 }
