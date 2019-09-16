@@ -23,11 +23,9 @@ const gameServer = new Server({
 
 gameServer.define("Game", GameRoom);
 
-app.use('/', express.static(path.join(__dirname, "static")));
-app.use('/', serveIndex(path.join(__dirname, "static/GameRoom.html"), {'icons': true}))
-
-// (optional) attach web monitoring panel
-app.use('/colyseus', monitor(gameServer));
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname + '/static/GameRoom.html'));
+});
 
 gameServer.onShutdown(function(){
   console.log(`game server is going down.`);

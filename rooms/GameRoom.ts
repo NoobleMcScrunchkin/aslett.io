@@ -10,8 +10,18 @@ export class Player extends Schema {
     @type("number")
     y = Math.floor(Math.random() * 400);
 
+    movement = {
+        x: 0,
+        y: 0
+    };
+
     @type("string")
     color = this.colors[Math.floor(Math.random() * this.colors.length)];
+
+    movePlayer() {
+        this.x += this.movement.x;
+        this.y += this.movement.y;
+    }
 }
 
 export class State extends Schema {
@@ -28,24 +38,18 @@ export class State extends Schema {
     removePlayer (id: string) {
         delete this.players[ id ];
     }
-
-    movePlayer (id: string, movement: any) {
-        if (movement.x) {
-            this.players[ id ].x += movement.x * 10;
-
-        } else if (movement.y) {
-            this.players[ id ].y += movement.y * 10;
-        }
-    }
 }
 
 export class GameRoom extends Room<State> {
     maxClients = 420;
+    gameInterval = undefined;
 
     onCreate (options) {
         console.log("StateHandlerRoom created!", options);
 
         this.setState(new State());
+
+        this.gameInterval = setInterval(this.gameLoop.bind(this), 60 / 1000);
     }
 
     onJoin (client: Client) {
@@ -56,13 +60,70 @@ export class GameRoom extends Room<State> {
         this.state.removePlayer(client.sessionId);
     }
 
-    onMessage (client, data) {
-        console.log("StateHandlerRoom received message from", client.sessionId, ":", data);
-        this.state.movePlayer(client.sessionId, data);
+    onMessage (client, packet) {
+        console.log("StateHandlerRoom received message from", client.sessionId, ":", packet);
+        let id = packet.id;
+        let data = packet.data;
+
+        switch(id) {
+            case "KeyDown": {
+                switch(data.key) {
+                    case 37: {
+                        this.state.players[client.sessionId].movement.x = -1;
+                        break;
+                    }
+                    case 38: {
+                        this.state.players[client.sessionId].movement.y = -1;
+                        break;
+                    }
+                    case 39: {
+                        this.state.players[client.sessionId].movement.x = 1;
+                        break;
+                    }
+                    case 40: {
+                        this.state.players[client.sessionId].movement.y = 1;
+                        break;
+                    }
+                }
+                break;
+            }
+            case "KeyUp": {
+                switch(data.key) {
+                    case 37: {
+                        if(this.state.players[client.sessionId].movement.x == -1)
+                            this.state.players[client.sessionId].movement.x = 0;
+                        break;
+                    }
+                    case 38: {
+                        if(this.state.players[client.sessionId].movement.y == -1)
+                            this.state.players[client.sessionId].movement.y = 0;
+                        break;
+                    }
+                    case 39: {
+                        if(this.state.players[client.sessionId].movement.x == 1)
+                            this.state.players[client.sessionId].movement.x = 0;
+                        break;
+                    }
+                    case 40: {
+                        if(this.state.players[client.sessionId].movement.y == 1)
+                            this.state.players[client.sessionId].movement.y = 0;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     onDispose () {
         console.log("Dispose StateHandlerRoom");
+        clearInterval(this.gameInterval);
     }
 
+    gameLoop() {
+        for(let id in this.state.players) {
+            let player = this.state.players[id];
+            player.movePlayer();
+        }
+    }
 }

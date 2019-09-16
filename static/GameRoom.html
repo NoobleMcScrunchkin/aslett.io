@@ -59,18 +59,11 @@
             }
 
             window.addEventListener("keydown", function (e) {
-                if (e.which === 38) {
-                    up();
+                room.send({id: "KeyDown", data:{key: e.which}});
+            });
 
-                } else if (e.which === 39) {
-                    right();
-
-                } else if (e.which === 40) {
-                    down();
-
-                } else if (e.which === 37) {
-                    left();
-                }
+            window.addEventListener("keyup", function(e) {
+                room.send({id: "KeyUp", data:{key: e.which}});
             });
 
         });
