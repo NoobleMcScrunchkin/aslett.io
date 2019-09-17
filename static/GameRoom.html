@@ -63,58 +63,9 @@
 
                 document.body.appendChild(dom);
 
-                if(sessionId == currentId) {
-                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)) + "px";
-                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)) + "px";
-
-                    let cameraPosition = {
-                        x: player.x - window.innerWidth / 2,
-                        y: player.y - window.innerHeight / 2
-                    };
-
-                    for (let playerSessionId in players) {
-                        if(playerSessionId == currentId)
-                            continue;
-                        let otherPlayer = players[playerSessionId];
-                        let oPlayerObj = otherPlayer.player;
-                        if(oPlayerObj.x >= cameraPosition.x && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) && oPlayerObj.y >= cameraPosition.y && oPlayerObj.y <= (cameraPosition.y + window.innerHeight))
-                        {
-                            let offset = {
-                                x: oPlayerObj.x - cameraPosition.x,
-                                y: oPlayerObj.y - cameraPosition.y
-                            };
-                            otherPlayer.dom.hidden = false;
-                            otherPlayer.dom.style.left = (offset.x - (otherPlayer.dom.offsetWidth / 2)) + "px";
-                            otherPlayer.dom.style.top = (offset.y - (otherPlayer.dom.offsetHeight / 2)) + "px";
-                        }
-                        else
-                        {
-                            otherPlayer.dom.hidden = true;
-                        }
-                    }
-                }
-                else if(players[currentId]) {
-                    let cameraPosition = {
-                        x: players[currentId].player.x - window.innerWidth / 2,
-                        y: players[currentId].player.y - window.innerHeight / 2
-                    };
-
-                    let oPlayerObj = player;
-
-                    if(oPlayerObj.x >= cameraPosition.x && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) && oPlayerObj.y >= cameraPosition.y && oPlayerObj.y <= (cameraPosition.y + window.innerHeight))
-                    {
-                        let offset = {
-                            x: oPlayerObj.x - cameraPosition.x,
-                            y: oPlayerObj.y - cameraPosition.y
-                        };
-                        dom.hidden = false;
-                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
-                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
-                    }
-                    else
-                    {
-                        dom.hidden = true;
-                    }
+                moveCamera();
+                for (let playerSessionId in players) {
+                    renderPlayer(playerSessionId);
                 }
             }
 
@@ -124,62 +75,37 @@
             }
 
             room.state.players.onChange = function (player, sessionId) {
-                players[sessionId].player = player;
-                let dom = players[sessionId].dom;
+                moveCamera();
+                for (let playerSessionId in players) {
+                    renderPlayer(playerSessionId);
+                }
+            }
 
-                let cameraPosition = {
+            let renderPlayer = function(sessionId) {
+                let dom = players[sessionId].dom;
+                let player = players[sessionId].player;
+                if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
+                {
+                    let offset = {
+                        x: player.x - cameraPosition.x,
+                        y: player.y - cameraPosition.y
+                    };
+                    dom.hidden = false;
+                    dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
+                    dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
+                }
+                else {
+                    dom.hidden = true;
+                }
+            }
+
+            let moveCamera = function() {
+                cameraPosition = {
                     x: players[currentId].player.x - window.innerWidth / 2,
                     y: players[currentId].player.y - window.innerHeight / 2
                 };
 
-                // dom.style.left = player.x + "px";
-                // dom.style.top = player.y + "px";
-
-                if (currentId == sessionId) {
-                    // let dom = players[sessionId];
-                    dom.hidden = false;
-                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)).toString() + "px";
-                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)).toString() + "px";
-
-                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
-
-                    for (let playerSessionId in players) {
-                        if(playerSessionId == currentId)
-                            continue;
-                        let otherPlayer = players[playerSessionId];
-                        let oPlayerObj = otherPlayer.player;
-                        if(oPlayerObj.x >= cameraPosition.x - (otherPlayer.dom.offsetWidth / 2) && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) + (otherPlayer.dom.offsetWidth / 2) && oPlayerObj.y >= cameraPosition.y - (otherPlayer.dom.offsetHeight / 2) && oPlayerObj.y <= (cameraPosition.y + window.innerHeight) + (otherPlayer.dom.offsetHeight / 2))
-                        {
-                            let offset = {
-                                x: oPlayerObj.x - cameraPosition.x,
-                                y: oPlayerObj.y - cameraPosition.y
-                            };
-                            otherPlayer.dom.hidden = false;
-                            otherPlayer.dom.style.left = (offset.x - (otherPlayer.dom.offsetWidth / 2)) + "px";
-                            otherPlayer.dom.style.top = (offset.y - (otherPlayer.dom.offsetHeight / 2)) + "px";
-                        }
-                        else
-                        {
-                            otherPlayer.dom.hidden = true;
-                        }
-                    }
-                } else {
-                    let oPlayerObj = player;
-                    if(oPlayerObj.x >= cameraPosition.x - (dom.offsetWidth / 2) && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && oPlayerObj.y >= cameraPosition.y - (dom.offsetHeight / 2) && oPlayerObj.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
-                    {
-                        let offset = {
-                            x: oPlayerObj.x - cameraPosition.x,
-                            y: oPlayerObj.y - cameraPosition.y
-                        };
-                        dom.hidden = false;
-                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
-                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
-                    }
-                    else
-                    {
-                        dom.hidden = true;
-                    }
-                }
+                document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
             }
 
             window.addEventListener("keydown", function (e) {
