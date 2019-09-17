@@ -45,7 +45,6 @@ export class State extends Schema {
 
     createPlayer (id: string) {
         this.players[ id ] = new Player();
-        console.log(this.players[ id ].color);
     }
 
     removePlayer (id: string) {
@@ -54,7 +53,7 @@ export class State extends Schema {
 }
 
 export class GameRoom extends Room<State> {
-    maxClients = 420;
+    maxClients = 10;
     gameInterval = undefined;
 
     onCreate (options) {

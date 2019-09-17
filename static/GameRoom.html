@@ -28,6 +28,10 @@
         document.body.style.height = window.innerHeight;
         document.body.style.width = window.innerWidth;
 
+        if (Math.random() <= 0.005) {
+            document.body.style.backgroundImage = "url('/res/grid.png.why')";
+        }
+
         let host = window.document.location.host.replace(/:.*/, '');
 
         let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
@@ -44,9 +48,24 @@
                 let dom = document.createElement("div");
                 dom.className = "player";
 
+                dom.style.background = player.color;
+
+                if (document.body.style.backgroundColor == "white") {
+                    dom.style.border = "5px solid black";
+                } else {
+                    dom.style.border = "5px solid lightgrey";
+                }
+
+                players[sessionId] = {
+                    player: player,
+                    dom: dom
+                };
+
+                document.body.appendChild(dom);
+
                 if(sessionId == currentId) {
-                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)).toString() + "px";
-                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)).toString() + "px";
+                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)) + "px";
+                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)) + "px";
 
                     let cameraPosition = {
                         x: player.x - window.innerWidth / 2,
@@ -64,9 +83,9 @@
                                 x: oPlayerObj.x - cameraPosition.x,
                                 y: oPlayerObj.y - cameraPosition.y
                             };
-                            otherPlayer.dom.style.left = offset.x + "px";
-                            otherPlayer.dom.style.top = offset.y + "px";
                             otherPlayer.dom.hidden = false;
+                            otherPlayer.dom.style.left = (offset.x - (otherPlayer.dom.offsetWidth / 2)) + "px";
+                            otherPlayer.dom.style.top = (offset.y - (otherPlayer.dom.offsetHeight / 2)) + "px";
                         }
                         else
                         {
@@ -88,30 +107,15 @@
                             x: oPlayerObj.x - cameraPosition.x,
                             y: oPlayerObj.y - cameraPosition.y
                         };
-                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
-                        dom.style.top = (offset.x - (dom.offsetWidth / 2)) + "px";
                         dom.hidden = false;
+                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
+                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
                     }
                     else
                     {
                         dom.hidden = true;
                     }
                 }
-
-                dom.style.background = player.color;
-
-                if (document.body.style.backgroundColor == "white") {
-                    dom.style.border = "5px solid black";
-                } else {
-                    dom.style.border = "5px solid lightgrey";
-                }
-
-                players[sessionId] = {
-                    player: player,
-                    dom: dom
-                };
-
-                document.body.appendChild(dom);
             }
 
             room.state.players.onRemove = function (player, sessionId) {
@@ -150,9 +154,9 @@
                                 x: oPlayerObj.x - cameraPosition.x,
                                 y: oPlayerObj.y - cameraPosition.y
                             };
+                            otherPlayer.dom.hidden = false;
                             otherPlayer.dom.style.left = (offset.x - (otherPlayer.dom.offsetWidth / 2)) + "px";
                             otherPlayer.dom.style.top = (offset.y - (otherPlayer.dom.offsetHeight / 2)) + "px";
-                            otherPlayer.dom.hidden = false;
                         }
                         else
                         {
@@ -167,9 +171,9 @@
                             x: oPlayerObj.x - cameraPosition.x,
                             y: oPlayerObj.y - cameraPosition.y
                         };
+                        dom.hidden = false;
                         dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
                         dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
-                        dom.hidden = false;
                     }
                     else
                     {

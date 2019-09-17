@@ -29,6 +29,9 @@ app.get('/', function(req, res) {
 app.get('/res/grid.png', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png'));
 });
+app.get('/res/grid.png.why', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/grid.png.why'));
+});
 
 gameServer.onShutdown(function(){
   console.log(`game server is going down.`);
