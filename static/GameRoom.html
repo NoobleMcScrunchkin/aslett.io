@@ -44,12 +44,15 @@
 
             let currentId = room.sessionId;
 
+            cameraPosition = {
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2
+            };
+
             room.state.players.onAdd = function (player, sessionId) {
                 let dom = document.createElement("div");
                 dom.className = "player";
-
                 dom.style.background = player.color;
-
                 if (document.body.style.backgroundColor == "white") {
                     dom.style.border = "5px solid black";
                 } else {
@@ -61,9 +64,8 @@
                     dom: dom
                 };
 
-                document.body.appendChild(dom);
+                document.body.appendChild(players[sessionId].dom);
 
-                moveCamera();
                 for (let playerSessionId in players) {
                     renderPlayer(playerSessionId);
                 }
@@ -81,7 +83,7 @@
                 }
             }
 
-            let renderPlayer = function(sessionId) {
+            renderPlayer = function(sessionId) {
                 let dom = players[sessionId].dom;
                 let player = players[sessionId].player;
                 if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
@@ -99,7 +101,7 @@
                 }
             }
 
-            let moveCamera = function() {
+            moveCamera = function() {
                 cameraPosition = {
                     x: players[currentId].player.x - window.innerWidth / 2,
                     y: players[currentId].player.y - window.innerHeight / 2

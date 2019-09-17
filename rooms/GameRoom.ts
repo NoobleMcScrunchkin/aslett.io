@@ -30,11 +30,23 @@ export class Player extends Schema {
         this.velocity.y = (this.velocity.y + (this.acceleration.y * 1)) * 0.9;
         this.y += this.velocity.y;
 
+        if (this.velocity.x < 0.001 && this.velocity.x > -0.001) {
+            this.velocity.x = 0;
+        } else if (this.velocity.y < 0.001 && this.velocity.y > -0.001) {
+            this.velocity.y = 0;
+        }
+
         if (this.x < 0) {
             this.x = 0;
         }
         if (this.y < 0) {
             this.y = 0;
+        }
+        if (this.x > 1000) {
+            this.x = 1000;
+        }
+        if (this.y > 1000) {
+            this.y = 1000;
         }
     }
 }
@@ -70,10 +82,10 @@ export class GameRoom extends Room<State> {
 
     onLeave (client) {
         this.state.removePlayer(client.sessionId);
+        console.log(client.sessionId, "Joined.");
     }
 
     onMessage (client, packet) {
-        console.log("StateHandlerRoom received message from", client.sessionId, ":", packet);
         let id = packet.id;
         let data = packet.data;
 
