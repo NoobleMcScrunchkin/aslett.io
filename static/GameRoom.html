@@ -10,52 +10,169 @@
     <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
 
     <style type="text/css">
-      .player {
-        width: 100px;
-        height: 100px;
-        position: absolute;
-        border-radius: 50%;
-        border: 5px solid black;
-        padding-top: 24px;
-        box-sizing: border-box;
-        left: 0;
-        top: 0;
-      }
+        .player {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            border-radius: 50%;
+            border: 5px solid black;
+            padding-top: 24px;
+            box-sizing: border-box;
+            left: 0;
+            top: 0;
+        }
     </style>
-
   </head>
-  <body>
+  <body style="overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
     <script>
-        var host = window.document.location.host.replace(/:.*/, '');
+        document.body.style.height = window.innerHeight;
+        document.body.style.width = window.innerWidth;
 
-        var client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
-        var room;
+        let host = window.document.location.host.replace(/:.*/, '');
+
+        let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
+        let room;
+
         client.joinOrCreate("Game").then(room_instance => {
             room = room_instance
 
-            var players = {};
+            let players = {};
+
+            let currentId = room.sessionId;
+
+            console.log(currentId);
 
             // listen to patches coming from the server
             room.state.players.onAdd = function (player, sessionId) {
-                var dom = document.createElement("div");
+                let dom = document.createElement("div");
                 dom.className = "player";
-                dom.style.left = player.x + "px";
-                dom.style.top = player.y + "px";
+
+                if(sessionId == currentId) {
+                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)).toString() + "px";
+                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)).toString() + "px";
+
+                    let cameraPosition = {
+                        x: player.x - window.innerWidth / 2,
+                        y: player.y - window.innerHeight / 2
+                    };
+
+                    for (let playerSessionId in players) {
+                        if(playerSessionId == currentId)
+                            continue;
+                        let otherPlayer = players[playerSessionId];
+                        let oPlayerObj = otherPlayer.player;
+                        if(oPlayerObj.x >= cameraPosition.x && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) && oPlayerObj.y >= cameraPosition.y && oPlayerObj.y <= (cameraPosition.y + window.innerHeight))
+                        {
+                            let offset = {
+                                x: oPlayerObj.x - cameraPosition.x,
+                                y: oPlayerObj.y - cameraPosition.y
+                            };
+                            otherPlayer.dom.style.left = offset.x + "px";
+                            otherPlayer.dom.style.top = offset.y + "px";
+                            otherPlayer.dom.hidden = false;
+                        }
+                        else
+                        {
+                            otherPlayer.dom.hidden = true;
+                        }
+                    }
+                }
+                else if(players[currentId]) {
+                    let cameraPosition = {
+                        x: players[currentId].player.x - window.innerWidth / 2,
+                        y: players[currentId].player.y - window.innerHeight / 2
+                    };
+
+                    let oPlayerObj = player;
+
+                    if(oPlayerObj.x >= cameraPosition.x && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) && oPlayerObj.y >= cameraPosition.y && oPlayerObj.y <= (cameraPosition.y + window.innerHeight))
+                    {
+                        let offset = {
+                            x: oPlayerObj.x - cameraPosition.x,
+                            y: oPlayerObj.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
+                        dom.style.top = (offset.x - (dom.offsetWidth / 2)) + "px";
+                        dom.hidden = false;
+                    }
+                    else
+                    {
+                        dom.hidden = true;
+                    }
+                }
+
                 dom.style.background = player.color;
 
-                players[sessionId] = dom;
+                players[sessionId] = {
+                    player: player,
+                    dom: dom
+                };
+
                 document.body.appendChild(dom);
             }
 
             room.state.players.onRemove = function (player, sessionId) {
-                document.body.removeChild(players[sessionId]);
+                document.body.removeChild(players[sessionId].dom);
                 delete players[sessionId];
             }
 
             room.state.players.onChange = function (player, sessionId) {
-                var dom = players[sessionId];
-                dom.style.left = player.x + "px";
-                dom.style.top = player.y + "px";
+                players[sessionId].player = player;
+                let dom = players[sessionId].dom;
+
+                let cameraPosition = {
+                    x: players[currentId].player.x - window.innerWidth / 2,
+                    y: players[currentId].player.y - window.innerHeight / 2
+                };
+
+                // dom.style.left = player.x + "px";
+                // dom.style.top = player.y + "px";
+
+                if (currentId == sessionId) {
+                    // let dom = players[sessionId];
+                    dom.hidden = false;
+                    dom.style.left = ((window.innerWidth / 2) - (dom.offsetWidth / 2)).toString() + "px";
+                    dom.style.top = ((window.innerHeight / 2) - (dom.offsetHeight / 2)).toString() + "px";
+
+                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
+
+                    for (let playerSessionId in players) {
+                        if(playerSessionId == currentId)
+                            continue;
+                        let otherPlayer = players[playerSessionId];
+                        let oPlayerObj = otherPlayer.player;
+                        if(oPlayerObj.x >= cameraPosition.x - (otherPlayer.dom.offsetWidth / 2) && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) + (otherPlayer.dom.offsetWidth / 2) && oPlayerObj.y >= cameraPosition.y - (otherPlayer.dom.offsetHeight / 2) && oPlayerObj.y <= (cameraPosition.y + window.innerHeight) + (otherPlayer.dom.offsetHeight / 2))
+                        {
+                            let offset = {
+                                x: oPlayerObj.x - cameraPosition.x,
+                                y: oPlayerObj.y - cameraPosition.y
+                            };
+                            otherPlayer.dom.style.left = (offset.x - (otherPlayer.dom.offsetWidth / 2)) + "px";
+                            otherPlayer.dom.style.top = (offset.y - (otherPlayer.dom.offsetHeight / 2)) + "px";
+                            otherPlayer.dom.hidden = false;
+                        }
+                        else
+                        {
+                            otherPlayer.dom.hidden = true;
+                        }
+                    }
+                } else {
+                    let oPlayerObj = player;
+                    if(oPlayerObj.x >= cameraPosition.x - (dom.offsetWidth / 2) && oPlayerObj.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && oPlayerObj.y >= cameraPosition.y - (dom.offsetHeight / 2) && oPlayerObj.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
+                    {
+                        let offset = {
+                            x: oPlayerObj.x - cameraPosition.x,
+                            y: oPlayerObj.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
+                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
+                        dom.hidden = false;
+                    }
+                    else
+                    {
+                        dom.hidden = true;
+                    }
+                }
             }
 
             window.addEventListener("keydown", function (e) {

@@ -24,11 +24,18 @@ export class Player extends Schema {
     color = this.colors[Math.floor(Math.random() * this.colors.length)];
 
     movePlayer() {
-        this.velocity.x = (this.velocity.x + this.acceleration.x) * 0.9;
+        this.velocity.x = (this.velocity.x + (this.acceleration.x * 1)) * 0.9;
         this.x += this.velocity.x;
 
-        this.velocity.y = (this.velocity.y + this.acceleration.y) * 0.9;
+        this.velocity.y = (this.velocity.y + (this.acceleration.y * 1)) * 0.9;
         this.y += this.velocity.y;
+
+        if (this.x < 0) {
+            this.x = 0;
+        }
+        if (this.y < 0) {
+            this.y = 0;
+        }
     }
 }
 
@@ -75,19 +82,19 @@ export class GameRoom extends Room<State> {
             case "KeyDown": {
                 switch(data.key) {
                     case 37: {
-                        this.state.players[client.sessionId].acceleration.x = -2;
+                        this.state.players[client.sessionId].acceleration.x = -1;
                         break;
                     }
                     case 38: {
-                        this.state.players[client.sessionId].acceleration.y = -2;
+                        this.state.players[client.sessionId].acceleration.y = -1;
                         break;
                     }
                     case 39: {
-                        this.state.players[client.sessionId].acceleration.x = 2;
+                        this.state.players[client.sessionId].acceleration.x = 1;
                         break;
                     }
                     case 40: {
-                        this.state.players[client.sessionId].acceleration.y = 2;
+                        this.state.players[client.sessionId].acceleration.y = 1;
                         break;
                     }
                 }
@@ -96,22 +103,22 @@ export class GameRoom extends Room<State> {
             case "KeyUp": {
                 switch(data.key) {
                     case 37: {
-                        if(this.state.players[client.sessionId].acceleration.x == -2)
+                        if(this.state.players[client.sessionId].acceleration.x == -1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 38: {
-                        if(this.state.players[client.sessionId].acceleration.y == -2)
+                        if(this.state.players[client.sessionId].acceleration.y == -1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }
                     case 39: {
-                        if(this.state.players[client.sessionId].acceleration.x == 2)
+                        if(this.state.players[client.sessionId].acceleration.x == 1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 40: {
-                        if(this.state.players[client.sessionId].acceleration.y == 2)
+                        if(this.state.players[client.sessionId].acceleration.y == 1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }

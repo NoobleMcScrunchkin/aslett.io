@@ -9,7 +9,7 @@ import { monitor } from '@colyseus/monitor';
 // Import demo room handlers
 import { GameRoom } from "./rooms/GameRoom";
 
-const port = Number(process.env.PORT || 2567) + Number(process.env.NODE_APP_INSTANCE || 0);
+const port = Number(process.env.PORT || 80) + Number(process.env.NODE_APP_INSTANCE || 0);
 const app = express();
 
 app.use(cors());
@@ -25,6 +25,9 @@ gameServer.define("Game", GameRoom);
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/static/GameRoom.html'));
+});
+app.get('/res/grid.png', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/grid.png'));
 });
 
 gameServer.onShutdown(function(){
