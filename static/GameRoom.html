@@ -23,7 +23,7 @@
         }
     </style>
   </head>
-  <body style="overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
+  <body style="background-color: white; overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
     <script>
         document.body.style.height = window.innerHeight;
         document.body.style.width = window.innerWidth;
@@ -40,9 +40,6 @@
 
             let currentId = room.sessionId;
 
-            console.log(currentId);
-
-            // listen to patches coming from the server
             room.state.players.onAdd = function (player, sessionId) {
                 let dom = document.createElement("div");
                 dom.className = "player";
@@ -102,6 +99,12 @@
                 }
 
                 dom.style.background = player.color;
+
+                if (document.body.style.backgroundColor == "white") {
+                    dom.style.border = "5px solid black";
+                } else {
+                    dom.style.border = "5px solid lightgrey";
+                }
 
                 players[sessionId] = {
                     player: player,
@@ -177,6 +180,21 @@
 
             window.addEventListener("keydown", function (e) {
                 room.send({id: "KeyDown", data:{key: e.which}});
+                if (e.which == 32) {
+                    if (document.body.style.backgroundColor == "white") {
+                        document.body.style.backgroundColor = "black";
+                        divs = document.getElementsByClassName('player');
+                        for (i = 0; i != divs.length; i++) {
+                            divs[i].style.border = "5px solid lightgrey";
+                        }
+                    } else {
+                        document.body.style.backgroundColor = "white";
+                        divs = document.getElementsByClassName('player');
+                        for (i = 0; i != divs.length; i++) {
+                            divs[i].style.border = "5px solid black";
+                        }
+                    }
+                }
             });
 
             window.addEventListener("keyup", function(e) {
