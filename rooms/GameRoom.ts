@@ -69,8 +69,7 @@ export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
 
-    @type({ array: Bullet })
-    bullets = new ArraySchema<Bullet();
+    bullets = new ArraySchema<Bullet>();
 
     createPlayer (id: string) {
         this.players[ id ] = new Player();
