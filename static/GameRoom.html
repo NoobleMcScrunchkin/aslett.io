@@ -133,6 +133,8 @@
                 room.send({id: "KeyUp", data:{key: e.which}});
             });
 
+            window.addEventListener('resize', room.state.players.onChange);
+
         });
     </script>
   </body>
