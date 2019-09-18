@@ -1,5 +1,5 @@
 import { Room, Client } from "colyseus";
-import { Schema, type, MapSchema } from "@colyseus/schema";
+import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 
 export class Player extends Schema {
     colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'magenta'];
@@ -51,9 +51,26 @@ export class Player extends Schema {
     }
 }
 
+export class Bullet extends Schema {
+    @type("number")
+    x = 0;
+
+    @type("number")
+    y = 0;
+
+    @type("number")
+    damage = 0;
+
+    @type("number")
+    speed = 0;
+}
+
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
+
+    @type({ array: Bullet })
+    bullets = new ArraySchema<Bullet();
 
     createPlayer (id: string) {
         this.players[ id ] = new Player();
