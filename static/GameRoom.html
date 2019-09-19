@@ -21,17 +21,51 @@
             left: 0;
             top: 0;
         }
+        #nameArea {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+        }
+        #nameInput {
+            width: 30%;
+            border: none;
+            border-bottom: 2px solid black;
+            /*padding: 16px 0 10px;*/
+            font-size: 20px;
+            outline: 0;
+            text-align: center;
+            background: none;
+        }
+        #colourButton {
+            width: 100px;
+            height: 100px;
+            margin-top: 1%;
+            border-radius: 50%;
+            border: 5px solid black;
+        }
     </style>
+    <script src="res/jscolor.js"></script>
+    <script>
+        currentColour = Math.random().toString(16).slice(2, 8);
+    </script>
   </head>
   <body style="background-color: white; overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
-      <input style="left: 50%;" id="nameInput" value="Player">
-      <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;">
+      <div id="nameArea">
+          <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" oninput="if (this.value.length > 16) { this.value = this.value.substring(0,16);}">
+          <button id="colourButton" class="jscolor{valueElement:null, value: currentColour, onFineChange:'colourChanged(this.toString())'}"><b style="font-family: Tahoma, Geneva, sans-serif; pointer-events: none; vertical-align: middle; text-align: center;">Pick a Colour!</b></button>
+      </div>
+      <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;" id="chatArea" hidden=true>
           <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word; height: 30%;"></p>
           <input type="text" maxlength="16" style="width: 100%;" id="chatInput">
       </div>
     <script>
         document.body.style.height = window.innerHeight;
         document.body.style.width = window.innerWidth;
+
+        running = 0;
 
         if (Math.random() <= 0.005) {
             document.body.style.backgroundImage = "url('/res/grid.png.why')";
@@ -42,130 +76,151 @@
         let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
         let room;
 
-        client.joinOrCreate("Game").then(room_instance => {
-            let room = room_instance
+        startGame = function(name) {
+            running = 1;
+            this.name = name;
+            document.getElementById("chatArea").hidden = false;
+            client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
+                let room = room_instance
 
-            let players = {};
+                let players = {};
 
-            currentId = room.sessionId;
+                currentId = room.sessionId;
 
-            cameraPosition = {
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2
-            };
-
-            room.state.players.onAdd = function (player, sessionId) {
-                let dom = document.createElement("div");
-                dom.className = "player";
-                dom.innerHTML = "<b style='vertical-align: middle; text-align: center; text-overflow: clip; word-wrap: break-word;'>" + player.name + "</b>";
-                dom.style.background = player.color;
-                if (document.body.style.backgroundColor == "white") {
-                    dom.style.border = "5px solid black";
-                } else {
-                    dom.style.border = "5px solid lightgrey";
-                }
-
-                players[sessionId] = {
-                    player: player,
-                    dom: dom
-                };
-
-                document.body.appendChild(players[sessionId].dom);
-
-                for (let playerSessionId in players) {
-                    renderPlayer(playerSessionId);
-                }
-            }
-
-            room.state.players.onRemove = function (player, sessionId) {
-                document.body.removeChild(players[sessionId].dom);
-                delete players[sessionId];
-            }
-
-            room.state.players.onChange = function (player, sessionId) {
-                moveCamera();
-                for (let playerSessionId in players) {
-                    renderPlayer(playerSessionId);
-                }
-            }
-
-            room.onMessage((message) => {
-                console.log(message);
-                document.getElementById("chat").innerHTML += "<br>" + message;
-            });
-
-            renderPlayer = function(sessionId) {
-                let dom = players[sessionId].dom;
-                let player = players[sessionId].player;
-                try {
-                    dom.innerHTML = dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word; line-height: X; max-height: X'>" + room.state.players[sessionId].name + "</b>";
-                } catch {
-                    dom.innerHTML = "Player";
-                }
-                if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
-                {
-                    let offset = {
-                        x: player.x - cameraPosition.x,
-                        y: player.y - cameraPosition.y
-                    };
-                    dom.hidden = false;
-                    dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
-                    dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
-                } else {
-                    dom.hidden = true;
-                }
-            }
-
-            moveCamera = function() {
                 cameraPosition = {
-                    x: players[currentId].player.x - window.innerWidth / 2,
-                    y: players[currentId].player.y - window.innerHeight / 2
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2
                 };
 
-                document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
-            }
-
-            window.addEventListener("keydown", function (e) {
-                room.send({id: "KeyDown", data:{key: e.which}});
-
-                if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
+                room.state.players.onAdd = function (player, sessionId) {
+                    let dom = document.createElement("div");
+                    dom.className = "player";
+                    dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word;'>" + player.name + "</b>";
+                    dom.style.background = player.colour;
                     if (document.body.style.backgroundColor == "white") {
-                        document.body.style.backgroundColor = "black";
-                        divs = document.getElementsByClassName('player');
-                        for (i = 0; i != divs.length; i++) {
-                            divs[i].style.border = "5px solid lightgrey";
-                        }
+                        dom.style.border = "5px solid black";
                     } else {
-                        document.body.style.backgroundColor = "white";
-                        divs = document.getElementsByClassName('player');
-                        for (i = 0; i != divs.length; i++) {
-                            divs[i].style.border = "5px solid black";
-                        }
+                        dom.style.border = "5px solid lightgrey";
                     }
-                } else if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
-                    sendMessage();
-                } else if (e.which == 13 && document.getElementById("nameInput") == document.activeElement) {
-                    updateName();
+
+                    players[sessionId] = {
+                        player: player,
+                        dom: dom
+                    };
+
+                    document.body.appendChild(players[sessionId].dom);
+
+                    for (let playerSessionId in players) {
+                        renderPlayer(playerSessionId);
+                    }
                 }
+
+                room.state.players.onRemove = function (player, sessionId) {
+                    document.body.removeChild(players[sessionId].dom);
+                    delete players[sessionId];
+                }
+
+                room.state.players.onChange = function (player, sessionId) {
+                    moveCamera();
+                    for (let playerSessionId in players) {
+                        renderPlayer(playerSessionId);
+                    }
+                }
+
+                room.onMessage((message) => {
+                    console.log(message);
+                    document.getElementById("chat").innerHTML += "<br>" + message;
+                });
+
+                renderPlayer = function(sessionId) {
+                    let dom = players[sessionId].dom;
+                    let player = players[sessionId].player;
+                    try {
+                        dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word;'>" + players[sessionId].player.name + "</b>";
+                    } catch {
+                        dom.innerHTML = "Player";
+                    }
+                    if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
+                    {
+                        let offset = {
+                            x: player.x - cameraPosition.x,
+                            y: player.y - cameraPosition.y
+                        };
+                        dom.hidden = false;
+                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
+                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
+                    } else {
+                        dom.hidden = true;
+                    }
+                }
+
+                moveCamera = function() {
+                    cameraPosition = {
+                        x: players[currentId].player.x - window.innerWidth / 2,
+                        y: players[currentId].player.y - window.innerHeight / 2
+                    };
+
+                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
+                }
+
+                sendMessage = function() {
+                    if (room.state.players[currentId].name == "") {
+                        message = "Player" + ": " + document.getElementById("chatInput").value;
+                    } else {
+                        message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
+                    }
+                    document.getElementById("chatInput").value = "";
+                    room.send({id: "Message", data: message});
+                }
+
+                window.addEventListener("keydown", function (e) {
+                    if (document.getElementById("chatInput") != document.activeElement)
+                    room.send({id: "KeyDown", data:{key: e.which}});
+
+                    if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
+                        if (document.body.style.backgroundColor == "white") {
+                            document.body.style.backgroundColor = "black";
+                            divs = document.getElementsByClassName('player');
+                            for (i = 0; i != divs.length; i++) {
+                                divs[i].style.border = "5px solid lightgrey";
+                                divs[i].style.color = "lightgrey";
+                            }
+                        } else {
+                            document.body.style.backgroundColor = "white";
+                            divs = document.getElementsByClassName('player');
+                            for (i = 0; i != divs.length; i++) {
+                                divs[i].style.border = "5px solid black";
+                                divs[i].style.color = "black";
+                            }
+                        }
+                    } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
+                        sendMessage();
+                    }
+                });
+
+                window.addEventListener("keyup", function(e) {
+                    room.send({id: "KeyUp", data:{key: e.which}});
+                });
+
+                window.addEventListener('resize', room.state.players.onChange);
+
             });
+        }
 
-            sendMessage = function() {
-                message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
-                document.getElementById("chatInput").value = "";
-                room.send({id: "Message", data: message});
+        window.addEventListener("keydown", function (e) {
+            if (!running && e.which == 13) {
+                name = document.getElementById("nameInput").value;
+                if (name = "Enter a name")
+                name = ""
+                document.getElementById("nameInput").remove();
+                document.getElementById("colourButton").remove();
+                startGame(name, currentColour);
             }
-
-            updateName = function() {
-                room.send({id: "Name", data: document.getElementById("nameInput").value.substring(0,15)});
-            }
-
-            window.addEventListener("keyup", function(e) {
-                room.send({id: "KeyUp", data:{key: e.which}});
-            });
-
-            window.addEventListener('resize', room.state.players.onChange);
-
         });
+
+        colourChanged = function(colour) {
+            currentColour = colour;
+        }
     </script>
   </body>
 </html>

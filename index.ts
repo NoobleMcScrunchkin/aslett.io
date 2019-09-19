@@ -32,6 +32,9 @@ app.get('/res/grid.png', function(req, res) {
 app.get('/res/grid.png.why', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png.why'));
 });
+app.get('/res/jscolor.js', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/jscolor.js'));
+});
 
 app.use('/colyseus', monitor(gameServer));
 

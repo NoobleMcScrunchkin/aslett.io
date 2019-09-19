@@ -2,13 +2,11 @@ import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 
 export class Player extends Schema {
-    colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'magenta'];
+    @type("number")
+    x = Math.floor(Math.random() * 10000);
 
     @type("number")
-    x = Math.floor(Math.random() * 400);
-
-    @type("number")
-    y = Math.floor(Math.random() * 400);
+    y = Math.floor(Math.random() * 10000);
 
     velocity = {
         x: 0,
@@ -21,10 +19,16 @@ export class Player extends Schema {
     };
 
     @type("string")
-    color = this.colors[Math.floor(Math.random() * this.colors.length)];
+    colour = "#FFFFFF"
 
     @type("string")
     name = "Player";
+
+    constructor(name, colour) {
+        super(name, colour);
+        this.name = name.substring(0, 16);
+        this.colour = "#" + colour;
+    }
 
     movePlayer() {
         this.velocity.x = (this.velocity.x + (this.acceleration.x * 1)) * 0.9;
@@ -45,10 +49,10 @@ export class Player extends Schema {
         if (this.y < 0) {
             this.y = 0;
         }
-        if (this.x > 1000) {
+        if (this.x > 10000) {
             this.x = 1000;
         }
-        if (this.y > 1000) {
+        if (this.y > 10000) {
             this.y = 1000;
         }
     }
@@ -74,8 +78,8 @@ export class State extends Schema {
 
     bullets = new ArraySchema<Bullet>();
 
-    createPlayer (id: string) {
-        this.players[ id ] = new Player();
+    createPlayer (id: string, name: string, colour: string) {
+        this.players[ id ] = new Player(name, colour);
     }
 
     removePlayer (id: string) {
@@ -88,15 +92,15 @@ export class GameRoom extends Room<State> {
     gameInterval = undefined;
 
     onCreate (options) {
-        console.log("StateHandlerRoom created!", options);
+        console.log("GameRoom created!");
 
         this.setState(new State());
 
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }
 
-    onJoin (client: Client) {
-        this.state.createPlayer(client.sessionId);
+    onJoin (client: Client, options) {
+        this.state.createPlayer(client.sessionId, options.name, options.colour);
         console.log(this.state.players[client.sessionId].name, "Joined.");
         this.broadcast((this.state.players[client.sessionId].name + " Joined."));
     }
@@ -114,19 +118,23 @@ export class GameRoom extends Room<State> {
         switch(id) {
             case "KeyDown": {
                 switch(data.key) {
-                    case 37: {
+                    case 37:
+                    case 65: {
                         this.state.players[client.sessionId].acceleration.x = -1;
                         break;
                     }
-                    case 38: {
+                    case 38:
+                    case 87: {
                         this.state.players[client.sessionId].acceleration.y = -1;
                         break;
                     }
-                    case 39: {
+                    case 39:
+                    case 68: {
                         this.state.players[client.sessionId].acceleration.x = 1;
                         break;
                     }
-                    case 40: {
+                    case 40:
+                    case 83: {
                         this.state.players[client.sessionId].acceleration.y = 1;
                         break;
                     }
@@ -135,22 +143,26 @@ export class GameRoom extends Room<State> {
             }
             case "KeyUp": {
                 switch(data.key) {
-                    case 37: {
+                    case 37:
+                    case 65: {
                         if(this.state.players[client.sessionId].acceleration.x == -1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
-                    case 38: {
+                    case 38:
+                    case 87: {
                         if(this.state.players[client.sessionId].acceleration.y == -1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }
-                    case 39: {
+                    case 39:
+                    case 68: {
                         if(this.state.players[client.sessionId].acceleration.x == 1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
-                    case 40: {
+                    case 40:
+                    case 83: {
                         if(this.state.players[client.sessionId].acceleration.y == 1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
