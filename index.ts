@@ -33,6 +33,8 @@ app.get('/res/grid.png.why', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png.why'));
 });
 
+app.use('/colyseus', monitor(gameServer));
+
 gameServer.onShutdown(function(){
   console.log(`game server is going down.`);
 });
