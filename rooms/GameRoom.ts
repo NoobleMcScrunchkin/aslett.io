@@ -94,11 +94,14 @@ export class GameRoom extends Room<State> {
 
     onJoin (client: Client) {
         this.state.createPlayer(client.sessionId);
+        console.log(client.sessionId, "Joined.");
+        this.broadcast((client.sessionId + " Joined."));
     }
 
     onLeave (client) {
         this.state.removePlayer(client.sessionId);
-        console.log(client.sessionId, "Joined.");
+        console.log(client.sessionId, "Left.");
+        this.broadcast((client.sessionId + " Left."));
     }
 
     onMessage (client, packet) {
@@ -150,6 +153,11 @@ export class GameRoom extends Room<State> {
                         break;
                     }
                 }
+                break;
+            }
+            case "Message": {
+                console.log("Message: " + data);
+                this.broadcast(data);
                 break;
             }
         }
