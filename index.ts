@@ -36,7 +36,7 @@ app.get('/res/jscolor.js', function(req, res) {
 app.use('/colyseus', monitor(gameServer));
 
 gameServer.onShutdown(function(){
-  console.log(`\x1b[31mStopping!`);
+  console.log(`\x1b[31mStopping!\x1b[37m`);
 });
 
 gameServer.listen(port);
