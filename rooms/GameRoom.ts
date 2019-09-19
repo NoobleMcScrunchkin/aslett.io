@@ -58,25 +58,9 @@ export class Player extends Schema {
     }
 }
 
-export class Bullet extends Schema {
-    @type("number")
-    x = 0;
-
-    @type("number")
-    y = 0;
-
-    @type("number")
-    damage = 0;
-
-    @type("number")
-    speed = 0;
-}
-
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
-
-    bullets = new ArraySchema<Bullet>();
 
     createPlayer (id: string, name: string, colour: string) {
         this.players[ id ] = new Player(name, colour);
@@ -92,7 +76,7 @@ export class GameRoom extends Room<State> {
     gameInterval = undefined;
 
     onCreate (options) {
-        console.log("GameRoom created!");
+        console.log("\x1b[32mGameRoom \x1b[34mcreated!\x1b[37m");
 
         this.setState(new State());
 
@@ -101,12 +85,12 @@ export class GameRoom extends Room<State> {
 
     onJoin (client: Client, options) {
         this.state.createPlayer(client.sessionId, options.name, options.colour);
-        console.log(this.state.players[client.sessionId].name, "Joined.");
+        console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
         this.broadcast((this.state.players[client.sessionId].name + " Joined."));
     }
 
     onLeave (client) {
-        console.log(this.state.players[client.sessionId].name, "Left.");
+        console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
         this.broadcast((this.state.players[client.sessionId].name + " Left."));
         this.state.removePlayer(client.sessionId);
     }
@@ -183,7 +167,7 @@ export class GameRoom extends Room<State> {
     }
 
     onDispose () {
-        console.log("Dispose StateHandlerRoom");
+        console.log("\x1b[32mGameRoom \x1b[31mRemoved\x1b[37m");
         clearInterval(this.gameInterval);
     }
 
