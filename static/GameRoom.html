@@ -24,9 +24,10 @@
     </style>
   </head>
   <body style="background-color: white; overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
+      <input style="left: 50%;" id="nameInput" value="Player">
       <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;">
-          <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word;"></p>
-          <input style="width: 100%;" id="chatInput">
+          <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word; height: 30%;"></p>
+          <input type="text" maxlength="16" style="width: 100%;" id="chatInput">
       </div>
     <script>
         document.body.style.height = window.innerHeight;
@@ -42,7 +43,7 @@
         let room;
 
         client.joinOrCreate("Game").then(room_instance => {
-            room = room_instance
+            let room = room_instance
 
             let players = {};
 
@@ -56,6 +57,7 @@
             room.state.players.onAdd = function (player, sessionId) {
                 let dom = document.createElement("div");
                 dom.className = "player";
+                dom.innerHTML = "<b style='vertical-align: middle; text-align: center; text-overflow: clip; word-wrap: break-word;'>" + player.name + "</b>";
                 dom.style.background = player.color;
                 if (document.body.style.backgroundColor == "white") {
                     dom.style.border = "5px solid black";
@@ -95,6 +97,11 @@
             renderPlayer = function(sessionId) {
                 let dom = players[sessionId].dom;
                 let player = players[sessionId].player;
+                try {
+                    dom.innerHTML = dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word; line-height: X; max-height: X'>" + room.state.players[sessionId].name + "</b>";
+                } catch {
+                    dom.innerHTML = "Player";
+                }
                 if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
                 {
                     let offset = {
@@ -104,8 +111,7 @@
                     dom.hidden = false;
                     dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
                     dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
-                }
-                else {
+                } else {
                     dom.hidden = true;
                 }
             }
@@ -122,7 +128,7 @@
             window.addEventListener("keydown", function (e) {
                 room.send({id: "KeyDown", data:{key: e.which}});
 
-                if (e.which == 32 && document.getElementById("chatInput") != document.activeElement) {
+                if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
                     if (document.body.style.backgroundColor == "white") {
                         document.body.style.backgroundColor = "black";
                         divs = document.getElementsByClassName('player');
@@ -136,10 +142,22 @@
                             divs[i].style.border = "5px solid black";
                         }
                     }
-                } else if (e.which == 13 && document.getElementById("chatInput").value != "") {
+                } else if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
                     sendMessage();
+                } else if (e.which == 13 && document.getElementById("nameInput") == document.activeElement) {
+                    updateName();
                 }
             });
+
+            sendMessage = function() {
+                message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
+                document.getElementById("chatInput").value = "";
+                room.send({id: "Message", data: message});
+            }
+
+            updateName = function() {
+                room.send({id: "Name", data: document.getElementById("nameInput").value.substring(0,15)});
+            }
 
             window.addEventListener("keyup", function(e) {
                 room.send({id: "KeyUp", data:{key: e.which}});
@@ -148,12 +166,6 @@
             window.addEventListener('resize', room.state.players.onChange);
 
         });
-
-        sendMessage = function() {
-            message = currentId + ": " + document.getElementById("chatInput").value;
-            document.getElementById("chatInput").value = "";
-            room.send({id: "Message", data: message});
-        }
     </script>
   </body>
 </html>

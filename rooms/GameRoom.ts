@@ -23,6 +23,9 @@ export class Player extends Schema {
     @type("string")
     color = this.colors[Math.floor(Math.random() * this.colors.length)];
 
+    @type("string")
+    name = "Player";
+
     movePlayer() {
         this.velocity.x = (this.velocity.x + (this.acceleration.x * 1)) * 0.9;
         this.x += this.velocity.x;
@@ -94,14 +97,14 @@ export class GameRoom extends Room<State> {
 
     onJoin (client: Client) {
         this.state.createPlayer(client.sessionId);
-        console.log(client.sessionId, "Joined.");
-        this.broadcast((client.sessionId + " Joined."));
+        console.log(this.state.players[client.sessionId].name, "Joined.");
+        this.broadcast((this.state.players[client.sessionId].name + " Joined."));
     }
 
     onLeave (client) {
+        console.log(this.state.players[client.sessionId].name, "Left.");
+        this.broadcast((this.state.players[client.sessionId].name + " Left."));
         this.state.removePlayer(client.sessionId);
-        console.log(client.sessionId, "Left.");
-        this.broadcast((client.sessionId + " Left."));
     }
 
     onMessage (client, packet) {
@@ -159,6 +162,10 @@ export class GameRoom extends Room<State> {
                 console.log("Message: " + data);
                 this.broadcast(data);
                 break;
+            }
+            case "Name": {
+                this.broadcast(this.state.players[client.sessionId].name + " changed their name to " + data + ".");
+                this.state.players[client.sessionId].name = data;
             }
         }
     }
