@@ -128,11 +128,10 @@
                 }
 
                 room.onMessage((message) => {
-                    console.log(message);
                     document.getElementById("chat").innerHTML += "<br>" + message;
                 });
 
-                renderPlayer = function(sessionId) {
+                let renderPlayer = function(sessionId) {
                     let dom = players[sessionId].dom;
                     let player = players[sessionId].player;
                     try {
@@ -154,7 +153,7 @@
                     }
                 }
 
-                moveCamera = function() {
+                let moveCamera = function() {
                     cameraPosition = {
                         x: players[currentId].player.x - window.innerWidth / 2,
                         y: players[currentId].player.y - window.innerHeight / 2
@@ -163,7 +162,7 @@
                     document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
                 }
 
-                sendMessage = function() {
+                let sendMessage = function() {
                     if (room.state.players[currentId].name == "") {
                         message = "Player" + ": " + document.getElementById("chatInput").value;
                     } else {

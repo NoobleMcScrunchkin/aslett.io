@@ -50,10 +50,10 @@ export class Player extends Schema {
             this.y = 0;
         }
         if (this.x > 10000) {
-            this.x = 1000;
+            this.x = 10000;
         }
         if (this.y > 10000) {
-            this.y = 1000;
+            this.y = 10000;
         }
     }
 }
