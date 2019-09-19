@@ -155,7 +155,7 @@ export class GameRoom extends Room<State> {
                 break;
             }
             case "Message": {
-                console.log("Message: " + data);
+                console.log("\x1b[34mMessage: \x1b[32m" + data + "\x1b[37m");
                 this.broadcast(data);
                 break;
             }
