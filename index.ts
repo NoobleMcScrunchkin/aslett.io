@@ -5,8 +5,6 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'colyseus';
 import { monitor } from '@colyseus/monitor';
-
-// Import demo room handlers
 import { GameRoom } from "./rooms/GameRoom";
 
 const port = Number(process.env.PORT || 80) + Number(process.env.NODE_APP_INSTANCE || 0);
@@ -15,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Attach WebSocket Server on HTTP Server.
 const gameServer = new Server({
   server: createServer(app),
   express: app,
@@ -39,14 +36,9 @@ app.get('/res/jscolor.js', function(req, res) {
 app.use('/colyseus', monitor(gameServer));
 
 gameServer.onShutdown(function(){
-  console.log(`game server is going down.`);
+  console.log(`\x1b[31mStopping!`);
 });
 
 gameServer.listen(port);
 
-// process.on("uncaughtException", (e) => {
-//   console.log(e.stack);
-//   process.exit(1);
-// });
-
-console.log(`Listening on http://localhost:${ port }`);
+console.log(`\x1b[34mListening on \x1b[32mhttp://localhost:${ port }\x1b[37m`);
