@@ -21,6 +21,9 @@
             left: 0;
             top: 0;
         }
+        .obstacle {
+            position: absolute;
+        }
         #nameArea {
             display: flex;
             flex-direction: column;
@@ -85,6 +88,9 @@
                 let room = room_instance
 
                 let players = {};
+                let obstacles = {};
+
+                let uniOffset = 50;
 
                 currentId = room.sessionId;
 
@@ -92,6 +98,21 @@
                     x: window.innerWidth / 2,
                     y: window.innerHeight / 2
                 };
+
+                room.state.obstacles.onAdd = function (obstacle, id) {
+                    let dom = document.createElement("div");
+                    dom.className = "obstacle";
+                    dom.style.background = obstacle.colour;
+                    dom.style.top = obstacle.y + "px";
+                    dom.style.left = obstacle.y + "px";
+                    dom.style.width = obstacle.w + "px";
+                    dom.style.height = obstacle.h + "px";
+                    obstacles[id] = {
+                        obstacle: obstacle,
+                        dom: dom
+                    };
+                    document.body.appendChild(obstacles[id].dom);
+                }
 
                 room.state.players.onAdd = function (player, sessionId) {
                     let dom = document.createElement("div");
@@ -126,6 +147,9 @@
                     for (let playerSessionId in players) {
                         renderPlayer(playerSessionId);
                     }
+                    for (let obstacleId in obstacles) {
+                        renderObstacle(obstacleId);
+                    }
                 }
 
                 room.onMessage((message) => {
@@ -141,17 +165,28 @@
                     } catch {
                         dom.innerHTML = "Player";
                     }
-                    if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2)) {
+                    if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
                         let offset = {
                             x: player.x - cameraPosition.x,
                             y: player.y - cameraPosition.y
                         };
                         dom.hidden = false;
-                        dom.style.left = (offset.x - (dom.offsetWidth / 2)) + "px";
-                        dom.style.top = (offset.y - (dom.offsetHeight / 2)) + "px";
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
                     } else {
                         dom.hidden = true;
                     }
+                }
+
+                let renderObstacle = function(id) {
+                    let dom = obstacles[id].dom;
+                    let obstacle = obstacles[id].obstacle;
+                    let offset = {
+                        x: obstacle.x - cameraPosition.x,
+                        y: obstacle.y - cameraPosition.y
+                    };
+                    dom.style.left = (offset.x - uniOffset) + "px";
+                    dom.style.top = (offset.y - uniOffset) + "px";
                 }
 
                 let moveCamera = function() {

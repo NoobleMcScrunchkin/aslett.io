@@ -49,12 +49,34 @@ export class Player extends Schema {
         if (this.y < 0) {
             this.y = 0;
         }
-        if (this.x > 10000) {
-            this.x = 10000;
+        if (this.x > 1000-100) {
+            this.x = 1000-100;
         }
-        if (this.y > 10000) {
-            this.y = 10000;
+        if (this.y > 1000-100) {
+            this.y = 1000-100;
         }
+    }
+}
+
+export class Obstacle extends Schema {
+    @type("number")
+    x = 0;
+    @type("number")
+    y = 0;
+    @type("number")
+    w = 0;
+    @type("number")
+    h = 0;
+    @type("string")
+    colour = "red";
+
+    constructor(x, y, w, h, colour) {
+        super(x, y, w, h, colour);
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.colour = colour;
     }
 }
 
@@ -69,6 +91,17 @@ export class State extends Schema {
     removePlayer (id: string) {
         delete this.players[ id ];
     }
+
+    @type({ map: Obstacle })
+    obstacles = new MapSchema<Obstacle>();
+
+    createObstacle (id: string, x: number, y: number, w: number, h: number, colour: string) {
+        this.obstacles[ id ] = new Obstacle(x, y, w, h, colour);
+    }
+
+    removeObstacle (id: string) {
+        delete this.obstacles[ id ];
+    }
 }
 
 export class GameRoom extends Room<State> {
@@ -79,6 +112,11 @@ export class GameRoom extends Room<State> {
         console.log("\x1b[32mGameRoom \x1b[34mcreated!\x1b[37m");
 
         this.setState(new State());
+
+        this.state.createObstacle("0", 0, 0, 1000, 1, "black");
+        this.state.createObstacle("1", 0, 0, 1, 1000, "black");
+        this.state.createObstacle("2", 1000, 0, 1, 1000, "black");
+        this.state.createObstacle("3", 0, 1000, 1000, 1, "black");
 
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }
