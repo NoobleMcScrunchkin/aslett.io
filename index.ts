@@ -26,6 +26,9 @@ app.get('/', function(req, res) {
 app.get('/res/grid.png', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png'));
 });
+app.get('/res/gridDark.png', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/gridDark.png'));
+});
 app.get('/res/jscolor.js', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/jscolor.js'));
 });
