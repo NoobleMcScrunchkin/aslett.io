@@ -34,6 +34,12 @@
             align-items: center;
             text-align: center;
             min-height: 100vh;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         #nameInput {
             width: 30%;
@@ -73,6 +79,7 @@
             background-image: url('res/grid.png');
         }
     </style>
+    <script src="res/jquery.js"></script>
     <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
     <script>
         var currentColour = "";
@@ -91,9 +98,9 @@
               </button>
           </div>
       </div>
-      <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;" id="chatArea" hidden=true>
-          <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word; height: 30%;"></p>
-          <input type="text" style="width: 100%;" id="chatInput">
+      <div style="float: left; position: fixed; top: 0px; left: 0px; width: 20%; height: 100%; background: rgba(0,0,0,0.25)" id="chatArea" hidden=true>
+          <input type="text" onclick="if (this.value == 'Chat') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Chat'}" style="outline: 0; font-size: 16px; background: none; border: none; border-bottom: 1px solid white; box-sizing:border-box; display: relative; width: 95%; padding: 5px; margin-top: 3px" id="chatInput" value="Chat">
+          <p id="chat" style="position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"></p>
       </div>
     <script>
         document.body.style.height = window.innerHeight;
@@ -143,7 +150,9 @@
                 room.state.players.onAdd = function (player, sessionId) {
                     let dom = document.createElement("div");
                     dom.className = "player";
-                    dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word;'>" + player.name + "</b>";
+                    domb = document.createElement("b");
+                    domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
+                    domb.textContent = player.name;
                     dom.style.background = player.colour;
                     if (document.body.style.backgroundColor == "white") {
                         dom.style.border = "5px solid black";
@@ -157,6 +166,7 @@
                     };
 
                     document.body.appendChild(players[sessionId].dom);
+                    players[sessionId].dom.appendChild(domb);
 
                     for (let playerSessionId in players) {
                         renderPlayer(playerSessionId);
@@ -179,18 +189,16 @@
                 }
 
                 room.onMessage((message) => {
-                    document.getElementById("chat").innerHTML += "<br>" + message;
+                    messagep = document.createElement("p");
+                    messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
+                    messagep.textContent = message;
+                    $(messagep).insertAfter("#chatInput");
                     room.state.players.onChange();
                 });
 
                 let renderPlayer = function(sessionId) {
                     let dom = players[sessionId].dom;
                     let player = players[sessionId].player;
-                    try {
-                        dom.innerHTML = "<b style='vertical-align: middle; text-align: center; word-wrap: break-word;'>" + players[sessionId].player.name + "</b>";
-                    } catch {
-                        dom.innerHTML = "Player";
-                    }
                     if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
                         let offset = {
                             x: player.x - cameraPosition.x,
@@ -225,7 +233,6 @@
                 }
 
                 let sendMessage = function() {
-                    document.getElementById("chatInput").blur();
                     if (room.state.players[currentId].name == "") {
                         message = "Player" + ": " + document.getElementById("chatInput").value;
                     } else {
@@ -251,6 +258,9 @@
                             for (i = 0; i != divs.length; i++) {
                                 divs[i].style.background = "White";
                             }
+                            document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
+                            document.getElementById("chatArea").style.color = "white";
+                            document.getElementById("chatInput").style.color = "White";
                             document.body.style.backgroundImage = "url('res/gridDark.png')";
                         } else {
                             document.body.style.backgroundColor = "white";
@@ -263,6 +273,9 @@
                             for (i = 0; i != divs.length; i++) {
                                 divs[i].style.background = "black";
                             }
+                            document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
+                            document.getElementById("chatArea").style.color = "black";
+                            document.getElementById("chatInput").style.color = "black";
                             document.body.style.backgroundImage = "url('res/grid.png')";
                         }
                     } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
@@ -294,6 +307,21 @@
                 }
             }
         });
+
+        function checkOverflow(el)
+        {
+           var curOverflow = el.style.overflow;
+
+           if ( !curOverflow || curOverflow === "visible" )
+              el.style.overflow = "hidden";
+
+           var isOverflowing = el.clientWidth < el.scrollWidth
+              || el.clientHeight < el.scrollHeight;
+
+           el.style.overflow = curOverflow;
+
+           return isOverflowing;
+        }
     </script>
   </body>
 </html>
