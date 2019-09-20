@@ -53,9 +53,18 @@
         }
         #colourButtonRed {
             background: red;
+            float: left;
         }
         #colourButtonBlue {
             background: blue;
+            float: left;
+        }
+        #error {
+            font-family: Tahoma, Geneva, sans-serif;
+            font-size: 16px;
+            color: red;
+            vertical-align: middle;
+            text-align: center;
         }
         body {
             overflow: hidden;
@@ -72,12 +81,15 @@
   <body style="background-color: white;">
       <div id="nameArea">
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
-          <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'">
-              <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 20px; pointer-events: none; vertical-align: middle; text-align: center;">Red Team!</b>
-          </button>
-          <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'">
-              <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 20px; pointer-events: none; vertical-align: middle; text-align: center;">Blue Team!</b>
-          </button>
+          <b id="error"><br></b>
+          <div id="colours">
+              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; document.getElementById('error').innerHTML = '<br>'; this.getElementsByTagName('b')[0].innerHTML = 'Red Selected!'; document.getElementById('colourButtonBlue').childNodes[1].innerHTML = 'Blue Team!';">
+                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Red Team!</b>
+              </button>
+              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; document.getElementById('error').innerHTML = '<br>'; this.getElementsByTagName('b')[0].innerHTML = 'Blue Selected!'; document.getElementById('colourButtonRed').childNodes[1].innerHTML = 'Red Team!';">
+                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Blue Team!</b>
+              </button>
+          </div>
       </div>
       <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;" id="chatArea" hidden=true>
           <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word; height: 30%;"></p>
@@ -278,7 +290,7 @@
                     document.getElementById("colourButtonBlue").remove();
                     startGame(name, currentColour);
                 } else {
-                    alert("Please select a Team!")
+                    document.getElementById("error").innerHTML = "Please select a team";
                 }
             }
         });
