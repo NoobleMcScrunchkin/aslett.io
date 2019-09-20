@@ -54,12 +54,14 @@
   </head>
   <body style="background-color: white; overflow: hidden; background-image: url('/res/grid.png'); background-position: 0px 0px; background-repeat: repeat;">
       <div id="nameArea">
-          <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" oninput="if (this.value.length > 16) { this.value = this.value.substring(0,16);}">
-          <button id="colourButton" class="jscolor{valueElement:null, value: currentColour, onFineChange:'colourChanged(this.toString())'}"><b style="font-family: Tahoma, Geneva, sans-serif; pointer-events: none; vertical-align: middle; text-align: center;">Pick a Colour!</b></button>
+          <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
+          <button id="colourButton" class="jscolor{valueElement:null, value: currentColour, onFineChange:'colourChanged(this.toString())'}">
+              <b style="font-family: Tahoma, Geneva, sans-serif; pointer-events: none; vertical-align: middle; text-align: center;">Pick a Colour!</b>
+          </button>
       </div>
       <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;" id="chatArea" hidden=true>
           <p id="chat" style="text-align: left; text-overflow: clip; word-wrap: break-word; height: 30%;"></p>
-          <input type="text" maxlength="16" style="width: 100%;" id="chatInput">
+          <input type="text" style="width: 100%;" id="chatInput">
       </div>
     <script>
         document.body.style.height = window.innerHeight;
@@ -129,6 +131,7 @@
 
                 room.onMessage((message) => {
                     document.getElementById("chat").innerHTML += "<br>" + message;
+                    room.state.players.onChange();
                 });
 
                 let renderPlayer = function(sessionId) {
@@ -139,8 +142,7 @@
                     } catch {
                         dom.innerHTML = "Player";
                     }
-                    if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2))
-                    {
+                    if(player.x >= cameraPosition.x - (dom.offsetWidth / 2) && player.x <= (cameraPosition.x + window.innerWidth) + (dom.offsetWidth / 2) && player.y >= cameraPosition.y - (dom.offsetHeight / 2) && player.y <= (cameraPosition.y + window.innerHeight) + (dom.offsetHeight / 2)) {
                         let offset = {
                             x: player.x - cameraPosition.x,
                             y: player.y - cameraPosition.y
@@ -163,6 +165,7 @@
                 }
 
                 let sendMessage = function() {
+                    document.getElementById("chatInput").blur();
                     if (room.state.players[currentId].name == "") {
                         message = "Player" + ": " + document.getElementById("chatInput").value;
                     } else {

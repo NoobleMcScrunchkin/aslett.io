@@ -86,12 +86,20 @@ export class GameRoom extends Room<State> {
     onJoin (client: Client, options) {
         this.state.createPlayer(client.sessionId, options.name, options.colour);
         console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-        this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+        if (this.state.players[client.sessionId].name == "") {
+            this.broadcast(("Player Joined."));
+        } else {
+            this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+        }
     }
 
     onLeave (client) {
         console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
-        this.broadcast((this.state.players[client.sessionId].name + " Left."));
+        if (this.state.players[client.sessionId].name == "") {
+            this.broadcast(("Player Left."));
+        } else {
+            this.broadcast((this.state.players[client.sessionId].name + " Left."));
+        }
         this.state.removePlayer(client.sessionId);
     }
 
@@ -158,10 +166,6 @@ export class GameRoom extends Room<State> {
                 console.log("\x1b[34mMessage: \x1b[32m" + data + "\x1b[37m");
                 this.broadcast(data);
                 break;
-            }
-            case "Name": {
-                this.broadcast(this.state.players[client.sessionId].name + " changed their name to " + data + ".");
-                this.state.players[client.sessionId].name = data;
             }
         }
     }
