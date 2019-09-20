@@ -67,16 +67,13 @@ export class Obstacle extends Schema {
     w = 0;
     @type("number")
     h = 0;
-    @type("string")
-    colour = "red";
 
-    constructor(x, y, w, h, colour) {
-        super(x, y, w, h, colour);
+    constructor(x, y, w, h) {
+        super(x, y, w, h);
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
-        this.colour = colour;
     }
 }
 
@@ -85,6 +82,7 @@ export class State extends Schema {
     players = new MapSchema<Player>();
 
     createPlayer (id: string, name: string, colour: string) {
+        if(colour == "FF0000" || colour == "0000FF")
         this.players[ id ] = new Player(name, colour);
     }
 
@@ -95,8 +93,8 @@ export class State extends Schema {
     @type({ map: Obstacle })
     obstacles = new MapSchema<Obstacle>();
 
-    createObstacle (id: string, x: number, y: number, w: number, h: number, colour: string) {
-        this.obstacles[ id ] = new Obstacle(x, y, w, h, colour);
+    createObstacle (id: string, x: number, y: number, w: number, h: number) {
+        this.obstacles[ id ] = new Obstacle(x, y, w, h);
     }
 
     removeObstacle (id: string) {
@@ -113,32 +111,40 @@ export class GameRoom extends Room<State> {
 
         this.setState(new State());
 
-        this.state.createObstacle("0", 0, 0, 1000, 1, "black");
-        this.state.createObstacle("1", 0, 0, 1, 1000, "black");
-        this.state.createObstacle("2", 1000, 0, 1, 1000, "black");
-        this.state.createObstacle("3", 0, 1000, 1000, 1, "black");
+        this.state.createObstacle("0", 0, 0, 1000, 1);
+        this.state.createObstacle("1", 0, 0, 1, 1000);
+        this.state.createObstacle("2", 1000, 0, 1, 1000);
+        this.state.createObstacle("3", 0, 1000, 1000, 1);
 
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }
 
     onJoin (client: Client, options) {
         this.state.createPlayer(client.sessionId, options.name, options.colour);
-        console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-        if (this.state.players[client.sessionId].name == "") {
-            this.broadcast(("Player Joined."));
-        } else {
-            this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+        try {
+            console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+            if (this.state.players[client.sessionId].name == "") {
+                this.broadcast(("Player Joined."));
+            } else {
+                this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+            }
+        } catch {
+            client.close();
+            this.state.removePlayer(client.sessionId);
+            console.log("\x1b[31mPlayer joined with bad data.\x1b[37m");
         }
     }
 
     onLeave (client) {
-        console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
-        if (this.state.players[client.sessionId].name == "") {
-            this.broadcast(("Player Left."));
-        } else {
-            this.broadcast((this.state.players[client.sessionId].name + " Left."));
-        }
-        this.state.removePlayer(client.sessionId);
+        try {
+            console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
+            if (this.state.players[client.sessionId].name == "") {
+                this.broadcast(("Player Left."));
+            } else {
+                this.broadcast((this.state.players[client.sessionId].name + " Left."));
+            }
+            this.state.removePlayer(client.sessionId);
+        } catch {}
     }
 
     onMessage (client, packet) {

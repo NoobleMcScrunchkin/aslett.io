@@ -7,8 +7,6 @@
       body { font-family: Tahoma, Geneva, sans-serif; text-align: center; }
     </style>
 
-    <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
-
     <style type="text/css">
         .player {
             width: 100px;
@@ -25,6 +23,7 @@
         .obstacle {
             position: absolute;
             z-index: -1;
+            background: black;
         }
         #nameArea {
             display: flex;
@@ -45,12 +44,18 @@
             text-align: center;
             background: none;
         }
-        #colourButton {
+        .colourButton {
             width: 100px;
             height: 100px;
             margin-top: 1%;
             border-radius: 50%;
             border: 5px solid black;
+        }
+        #colourButtonRed {
+            background: red;
+        }
+        #colourButtonBlue {
+            background: blue;
         }
         body {
             overflow: hidden;
@@ -59,16 +64,19 @@
             background-image: url('res/grid.png');
         }
     </style>
-    <script src="res/jscolor.js"></script>
+    <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
     <script>
-        currentColour = Math.random().toString(16).slice(2, 8);
+        var currentColour = "";
     </script>
   </head>
   <body style="background-color: white;">
       <div id="nameArea">
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
-          <button id="colourButton" class="jscolor{valueElement:null, value: currentColour, onFineChange:'colourChanged(this.toString())'}">
-              <b style="font-family: Tahoma, Geneva, sans-serif; pointer-events: none; vertical-align: middle; text-align: center;">Pick a Colour!</b>
+          <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'">
+              <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 20px; pointer-events: none; vertical-align: middle; text-align: center;">Red Team!</b>
+          </button>
+          <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'">
+              <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 20px; pointer-events: none; vertical-align: middle; text-align: center;">Blue Team!</b>
           </button>
       </div>
       <div style="float: left; position: fixed; bottom: 5px; left: 5px; width: 30%;" id="chatArea" hidden=true>
@@ -263,16 +271,17 @@
             if (!running && e.which == 13) {
                 name = document.getElementById("nameInput").value;
                 if (name == "Enter a name")
-                name = ""
-                document.getElementById("nameInput").remove();
-                document.getElementById("colourButton").remove();
-                startGame(name, currentColour);
+                name = "";
+                if (currentColour == "FF0000" || currentColour == "0000FF") {
+                    document.getElementById("nameInput").remove();
+                    document.getElementById("colourButtonRed").remove();
+                    document.getElementById("colourButtonBlue").remove();
+                    startGame(name, currentColour);
+                } else {
+                    alert("Please select a Team!")
+                }
             }
         });
-
-        colourChanged = function(colour) {
-            currentColour = colour;
-        }
     </script>
   </body>
 </html>
