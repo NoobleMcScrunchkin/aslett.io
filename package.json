@@ -1,7 +1,7 @@
 {
-  "name": "colyseus-examples",
+  "name": "aslett.io",
   "version": "1.0.0",
-  "description": "Usage Examples of Colyseus Game Server",
+  "description": "CTF",
   "main": "index.js",
   "scripts": {
     "start": "ts-node index.ts",
@@ -11,7 +11,7 @@
     "node": "8.9.1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "",
   "dependencies": {
     "@colyseus/monitor": "^0.11.0",
     "colyseus": "^0.11.13",

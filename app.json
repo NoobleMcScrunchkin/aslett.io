@@ -1,12 +1,10 @@
 {
-  "name": "Colyseus Multiplayer",
-  "description": "Multiplayer Game Server for Node.js",
-  "repository": "https://github.com/colyseus/colyseus",
-  "logo": "https://github.com/colyseus/colyseus/blob/master/media/logo.png?raw=true",
-  "keywords": ["node", "multiplayer", "colyseus"],
+  "name": "aslett.io",
+  "description": "CTF",
+  "repository": "https://github.com/nooblemcscrunchkin/aslett.io",
+  "keywords": ["node", "multiplayer", "ctf"],
   "env": {
     "NPM_CONFIG_PRODUCTION": {
-      "description": "Leave as 'false' to install required devDependencies.",
       "value": "false"
     }
   }
