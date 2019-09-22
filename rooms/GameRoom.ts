@@ -283,7 +283,11 @@ process.on("SIGINT", function () {
 });
 
 stdin.on('data', function(data) {
-    data = data.toString().substring(0, data.toString().length - 2).split(" ");
+    if (process.platform == "win32") {
+        data = data.toString().substring(0, data.toString().length - 2).split(" ");
+    } else{
+        data = data.toString().substring(0, data.toString().length - 1).split(" ");
+    }
     let command = data[0].toLowerCase();
     if (command == 'exit' || command == 'stop') {
         for (let room in rooms) {
