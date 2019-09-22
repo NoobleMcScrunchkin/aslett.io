@@ -242,7 +242,7 @@ export class GameRoom extends Room<State> {
                 break;
             }
             case "Message": {
-                console.log(getTs(), "\x1b[34mMessage: \x1b[32m" + data + "\x1b[37m");
+                console.log(getTs(), "\x1b[34mMessage (" + this.roomId + "): \x1b[32m" + data + "\x1b[37m");
                 this.broadcast(data);
                 break;
             }
