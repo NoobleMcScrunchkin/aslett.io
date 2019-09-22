@@ -340,8 +340,13 @@ stdin.on('data', function(data) {
         if (data.length != 2) {
             if (rooms[data[1]] != undefined) {
                 if (rooms[data[1]].state.clients[data[2]] != undefined) {
-                    rooms[data[1]].broadcast(rooms[data[1]].state.players[data[2]].name + " was kicked.");
+                    if (rooms[data[1]].state.players[data[2]].name == "") {
+                        rooms[data[1]].broadcast("Player was kicked.");
+                    } else {
+                        rooms[data[1]].broadcast(rooms[data[1]].state.players[data[2]].name + " was kicked.");
+                    }
                     rooms[data[1]].state.clients[data[2]].close();
+                    console.log(getTs(), "\x1b[32mClient kicked.\x1b[37m")
                 } else {
                     console.log(getTs(), "\x1b[31mClient does not exist.\x1b[37m")
                 }
@@ -369,7 +374,6 @@ stdin.on('data', function(data) {
                 for (let player in rooms[data[1]].state.players) {
                     message += getTs() + " \x1b[32m" + player + " \x1b[37m: \x1b[34m'" + rooms[data[1]].state.players[player].name + "'\n";
                 }
-                message += "\x1b[37m";
             } else {
                 console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
             }
@@ -379,10 +383,11 @@ stdin.on('data', function(data) {
                 for (let player in rooms[room].state.players) {
                     message += getTs() + " \x1b[35mClient\x1b[37m: \x1b[32m" + player + " \x1b[37m: \x1b[34m'" + rooms[room].state.players[player].name + "'\n";
                 }
-                message += "\x1b[37m";
             }
         }
+        message = message.substring(0, message.length - 1);
         if (message != "") {
+            message += "\x1b[37m";
             console.log(message);
         } else {
             console.log(getTs(), "\x1b[31mNo clients.\x1b[37m")
