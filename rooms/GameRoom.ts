@@ -1,5 +1,35 @@
 import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
+var rooms = new Array;
+
+var getTs = function () {
+    let tsObj = new Date();
+
+    let hours = tsObj.getHours();
+    let minutes = tsObj.getMinutes();
+    let seconds = tsObj.getSeconds();
+    let hoursS = "";
+    let minutesS = "";
+    let secondsS = "";
+
+    if (hours < 10) {
+        hoursS = "0" + hours.toString();
+    } else {
+        hoursS = hours.toString();
+    }
+    if (minutes < 10) {
+        minutesS = "0" + minutes.toString();
+    } else {
+        minutesS = minutes.toString();
+    }
+    if (seconds < 10) {
+        secondsS = "0" + seconds.toString();
+    } else {
+        secondsS = seconds.toString();
+    }
+
+    return "\x1b[37m[" + hoursS + ":" + minutesS + ":" + secondsS + "]";
+}
 
 export class Player extends Schema {
     @type("number")
@@ -31,10 +61,10 @@ export class Player extends Schema {
     }
 
     movePlayer() {
-        this.velocity.x = (this.velocity.x + (this.acceleration.x * 1)) * 0.9;
+        this.velocity.x = (this.velocity.x + (this.acceleration.x * 1.5)) * 0.8;
         this.x += this.velocity.x;
 
-        this.velocity.y = (this.velocity.y + (this.acceleration.y * 1)) * 0.9;
+        this.velocity.y = (this.velocity.y + (this.acceleration.y * 1.5)) * 0.8;
         this.y += this.velocity.y;
 
         if (this.velocity.x < 0.001 && this.velocity.x > -0.001) {
@@ -80,14 +110,18 @@ export class Obstacle extends Schema {
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
+    clients = new Array();
 
-    createPlayer (id: string, name: string, colour: string) {
-        if(colour == "FF0000" || colour == "0000FF")
-        this.players[ id ] = new Player(name, colour);
+    createPlayer (client: Client, name: string, colour: string) {
+        if(colour == "FF0000" || colour == "0000FF") {
+            this.players[client.sessionId] = new Player(name, colour);
+            this.clients[client.sessionId] = client;
+        }
     }
 
     removePlayer (id: string) {
-        delete this.players[ id ];
+        delete this.players[id];
+        delete this.clients[id];
     }
 
     @type({ map: Obstacle })
@@ -103,11 +137,12 @@ export class State extends Schema {
 }
 
 export class GameRoom extends Room<State> {
-    maxClients = 10;
+    maxClients = 4;
     gameInterval = undefined;
 
     onCreate (options) {
-        console.log("\x1b[32mGameRoom \x1b[34mcreated!\x1b[37m");
+        rooms[this.roomId] = this;
+        console.log(getTs(), "\x1b[32mGameRoom \x1b[34mcreated!\x1b[37m");
 
         this.setState(new State());
 
@@ -120,9 +155,9 @@ export class GameRoom extends Room<State> {
     }
 
     onJoin (client: Client, options) {
-        this.state.createPlayer(client.sessionId, options.name, options.colour);
+        this.state.createPlayer(client, options.name, options.colour);
         try {
-            console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+            console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
             if (this.state.players[client.sessionId].name == "") {
                 this.broadcast(("Player Joined."));
             } else {
@@ -131,13 +166,13 @@ export class GameRoom extends Room<State> {
         } catch {
             client.close();
             this.state.removePlayer(client.sessionId);
-            console.log("\x1b[31mPlayer joined with bad data.\x1b[37m");
+            console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
         }
     }
 
     onLeave (client) {
         try {
-            console.log("\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
+            console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
             if (this.state.players[client.sessionId].name == "") {
                 this.broadcast(("Player Left."));
             } else {
@@ -207,7 +242,7 @@ export class GameRoom extends Room<State> {
                 break;
             }
             case "Message": {
-                console.log("\x1b[34mMessage: \x1b[32m" + data + "\x1b[37m");
+                console.log(getTs(), "\x1b[34mMessage: \x1b[32m" + data + "\x1b[37m");
                 this.broadcast(data);
                 break;
             }
@@ -215,7 +250,8 @@ export class GameRoom extends Room<State> {
     }
 
     onDispose () {
-        console.log("\x1b[32mGameRoom \x1b[31mRemoved\x1b[37m");
+        console.log(getTs(), "\x1b[32mGameRoom \x1b[31mRemoved\x1b[37m");
+        rooms = rooms.splice(rooms[this.roomId]);
         clearInterval(this.gameInterval);
     }
 
@@ -226,3 +262,132 @@ export class GameRoom extends Room<State> {
         }
     }
 }
+
+const stdin = process.stdin;
+const commands = {
+        "bc / broadcast": "Sends message to all rooms",
+        "bcroom / broadcastroom": "Sends message to a specific room",
+        "listclients": "Shows a list of each clients per room (Room Id can be specified to show clients in a particular room)",
+        "listrooms": "Shows a list of game rooms",
+        "kickclient": "Kicks a client from a room (kickclient [Room Id] [Client Id])",
+        "delroom": "Removes a room from the server (delroom [Room Id])",
+        "stop / exit": "Kills the server"
+};
+
+process.on("SIGINT", function () {
+    for (let room in rooms) {
+        rooms[room].broadcast("Server Stopped.");
+    }
+    console.log(getTs(), `\x1b[31mStopping!\x1b[37m`);
+    process.exit();
+});
+
+stdin.on('data', function(data) {
+    data = data.toString().substring(0, data.toString().length - 2).split(" ");
+    let command = data[0].toLowerCase();
+    if (command == 'exit' || command == 'stop') {
+        for (let room in rooms) {
+            rooms[room].broadcast("Server Stopped.");
+        }
+        console.log(getTs(), `\x1b[31mStopping!\x1b[37m`);
+        process.exit();
+    } else if (command == 'bcroom' || command == "broadcastroom") {
+        if (data.length != 2) {
+            let message = "";
+            for (let i = 2; i < data.length; i++) {
+                message += data[i] + " ";
+            }
+            if (rooms[data[1]] != undefined) {
+                rooms[data[1]].broadcast("Server> " + message);
+                console.log(getTs(), "\x1b[34mBroadcast (" + rooms[data[1]].roomId + "): \x1b[32mServer> " + message + "\x1b[37m");
+            } else {
+                console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
+            }
+        } else {
+            console.log(getTs(), "\x1b[31mMissing Argument(s)\x1b[37m");
+        }
+    } else if (command == 'bc' || command == "broadcast") {
+        if (data.length != 1) {
+            let message = "";
+            for (let i = 1; i < data.length; i++) {
+                message += data[i] + " ";
+            }
+            for (let room in rooms) {
+                rooms[room].broadcast("Server> " + message);
+            }
+            console.log(getTs(), "\x1b[34mBroadcast: \x1b[32mServer> " + message + "\x1b[37m")
+        } else {
+            console.log(getTs(), "\x1b[31mMissing Argument(s)\x1b[37m");
+        }
+    } else if (command == 'delroom') {
+        if (data.length != 1) {
+            if (rooms[data[1]] != undefined) {
+                rooms[data[1]].broadcast("Server Stopped.");
+                rooms[data[1]].disconnect();
+                console.log(getTs(), "\x1b[32mRoom deleted.\x1b[37m")
+                rooms = rooms.splice(rooms[data[1]]);
+            } else {
+                console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
+            }
+        } else {
+            console.log(getTs(), "\x1b[31mMissing Argument(s)\x1b[37m");
+        }
+    } else if (command == 'kickclient') {
+        if (data.length != 2) {
+            if (rooms[data[1]] != undefined) {
+                if (rooms[data[1]].state.clients[data[2]] != undefined) {
+                    rooms[data[1]].broadcast(rooms[data[1]].state.players[data[2]].name + " was kicked.");
+                    rooms[data[1]].state.clients[data[2]].close();
+                } else {
+                    console.log(getTs(), "\x1b[31mClient does not exist.\x1b[37m")
+                }
+            } else {
+                console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
+            }
+        } else {
+            console.log(getTs(), "\x1b[31mMissing Argument(s)\x1b[37m");
+        }
+    } else if (command == 'listrooms') {
+        let message = "";
+        for (let room in rooms) {
+            message += "\x1b[32m" + rooms[room].roomId + "\x1b[37m, ";
+        }
+        message = message.substring(0, message.length - 2);
+        if (message != "") {
+            console.log(getTs(), message);
+        } else {
+            console.log(getTs(), "\x1b[31mNo rooms.\x1b[37m")
+        }
+    } else if (command == 'listclients') {
+        let message = "";
+        if (data[1] != undefined) {
+            if (rooms[data[1]] != undefined) {
+                for (let player in rooms[data[1]].state.players) {
+                    message += getTs() + " \x1b[32m" + player + " \x1b[37m: \x1b[34m'" + rooms[data[1]].state.players[player].name + "'\n";
+                }
+                message += "\x1b[37m";
+            } else {
+                console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
+            }
+        } else {
+            for (let room in rooms) {
+                message += getTs() + " \x1b[35mRoom\x1b[37m: \x1b[31m" + rooms[room].roomId + "\n";
+                for (let player in rooms[room].state.players) {
+                    message += getTs() + " \x1b[35mClient\x1b[37m: \x1b[32m" + player + " \x1b[37m: \x1b[34m'" + rooms[room].state.players[player].name + "'\n";
+                }
+                message += "\x1b[37m";
+            }
+        }
+        if (message != "") {
+            console.log(message);
+        } else {
+            console.log(getTs(), "\x1b[31mNo clients.\x1b[37m")
+        }
+    } else if (command == 'help' || command == "?") {
+        for (let command in commands) {
+            console.log(getTs(), "\x1b[31m" + command + "\x1b[37m: \x1b[32m" + commands[command] + "\x1b[37m");
+        }
+    } else {
+        console.log(getTs(), "\x1b[31mCommand not found '" + command + "'\x1b[37m");
+    }
+});
