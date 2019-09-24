@@ -4,6 +4,29 @@ var rooms = new Array;
 
 var map = [{x: -10, y: -10, w: 4010, h: 10, colour: "#000000"}, {x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"}, {x: -10, y: -10, w: 10, h: 4010, colour: "#000000"}, {x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"}, {x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"}];
 
+function collides (rect, circle, collide_inside)
+{
+    // compute a center-to-center vector
+    var half = { x: rect.w/2, y: rect.h/2 };
+    var center = {
+        x: circle.x - (rect.x+half.x),
+        y: circle.y - (rect.y+half.y)};
+
+    // check circle position inside the rectangle quadrant
+    var side = {
+        x: Math.abs (center.x) - half.x,
+        y: Math.abs (center.y) - half.y};
+    if (side.x >  circle.r || side.y >  circle.r) // outside
+        return false;
+    if (side.x < -circle.r && side.y < -circle.r) // inside
+        return collide_inside;
+    if (side.x < 0 || side.y < 0) // intersects side or corner
+        return true;
+
+    // circle is near the corner
+    return side.x*side.x + side.y*side.y  < circle.r*circle.r;
+}
+
 var getTs = function () {
     let tsObj = new Date();
 
@@ -64,6 +87,8 @@ export class Player extends Schema {
 
     state = undefined;
 
+    radius = 50
+
     constructor(name, colour, state) {
         super(name, colour, state);
         this.state = state;
@@ -77,14 +102,36 @@ export class Player extends Schema {
 
         for (let obstacleId in this.state.obstacles) {
             let obstacle = this.state.obstacles[obstacleId];
-            if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
-                if (this.velocity.x < 0) {
-                    this.x = obstacle.x + obstacle.w;
-                    this.velocity.x = 0;
-                } else if (this.velocity.x > 0) {
-                    this.x = obstacle.x - this.w;
-                    this.velocity.x = 0;
+            let center = {
+                x: this.x + this.radius,
+                y: this.y + this.radius,
+                r: this.radius
+            };
+            if (collides(obstacle, center, true)) {
+                if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h - center.r && this.y + this.h > obstacle.y + center.r) {
+                    if (this.velocity.x < 0) {
+                        this.x = obstacle.x + obstacle.w + 1;
+                    } else if (this.velocity.x > 0) {
+                        this.x = obstacle.x - this.w - 1;
+                    }
+                } else {
+                    if (this.velocity.x > 0) {
+                        if (center.y < obstacle.y) {
+                            this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
+                        } else {
+                            this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+                        }
+                        this.x -= 1;
+                    } else if (this.velocity.x < 0) {
+                        if (center.y < obstacle.y) {
+                            this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
+                        } else {
+                            this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+                        }
+                        this.x += 1;
+                    }
                 }
+                this.velocity.x = 0;
             }
         }
 
@@ -93,14 +140,36 @@ export class Player extends Schema {
 
         for (let obstacleId in this.state.obstacles) {
             let obstacle = this.state.obstacles[obstacleId];
-            if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
-                if (this.velocity.y < 0) {
-                    this.y = obstacle.y + obstacle.h;
-                    this.velocity.y = 0;
-                } else if (this.velocity.y > 0) {
-                    this.y = obstacle.y - this.w;
-                    this.velocity.y = 0;
+            let center = {
+                x: this.x + this.radius,
+                y: this.y + this.radius,
+                r: this.radius
+            };
+            if (collides(obstacle, center, true)) {
+                if (this.x < obstacle.x + obstacle.w - center.r && this.x + this.w > obstacle.x + center.r && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
+                    if (this.velocity.y < 0) {
+                        this.y = obstacle.y + obstacle.h + 1;
+                    } else if (this.velocity.y > 0) {
+                        this.y = obstacle.y - this.h - 1;
+                    }
+                } else {
+                    if (this.velocity.y > 0) {
+                        if (center.x < obstacle.x) {
+                            this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
+                        } else {
+                            this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+                        }
+                        this.y -= 1;
+                    } else if (this.velocity.y < 0) {
+                        if (center.x < obstacle.x) {
+                            this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
+                        } else {
+                            this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+                        }
+                        this.y += 1;
+                    }
                 }
+                this.velocity.y = 0;
             }
         }
 
