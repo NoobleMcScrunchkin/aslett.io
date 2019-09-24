@@ -171,6 +171,11 @@
                     dom.style.background = bullet.team;
                     dom.style.width = (border * 2) + "px";
                     dom.style.height = (border * 2) + "px";
+                    if (document.body.style.backgroundColor == "white") {
+                        dom.style.border = "1px solid black";
+                    } else {
+                        dom.style.border = "1px solid white";
+                    }
                     bullets[id] = {
                         dom: dom,
                         bullet: bullet
@@ -198,7 +203,7 @@
                     if (document.body.style.backgroundColor == "white") {
                         dom.style.border = "5px solid black";
                     } else {
-                        dom.style.border = "5px solid lightgrey";
+                        dom.style.border = "5px solid white";
                     }
 
                     players[sessionId] = {
@@ -311,7 +316,11 @@
                             }
                             divs = document.getElementsByClassName('obstacle');
                             for (i = 0; i != divs.length; i++) {
-                                divs[i].style.background = "White";
+                                divs[i].style.border = "5px solid white";
+                            }
+                            divs = document.getElementsByClassName('bullet');
+                            for (i = 0; i != divs.length; i++) {
+                                divs[i].style.border = "1px solid white";
                             }
                             document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
                             document.getElementById("chatArea").style.color = "white";
@@ -326,7 +335,11 @@
                             }
                             divs = document.getElementsByClassName('obstacle');
                             for (i = 0; i != divs.length; i++) {
-                                divs[i].style.background = "black";
+                                divs[i].style.border = "5px solid black";
+                            }
+                            divs = document.getElementsByClassName('bullet');
+                            for (i = 0; i != divs.length; i++) {
+                                divs[i].style.border = "1px solid black";
                             }
                             document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
                             document.getElementById("chatArea").style.color = "black";
