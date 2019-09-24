@@ -2,6 +2,8 @@ import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 var rooms = new Array;
 
+var map = [{x: -10, y: -10, w: 4010, h: 10, colour: "#000000"}, {x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"}, {x: -10, y: -10, w: 10, h: 4010, colour: "#000000"}, {x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"}, {x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"}];
+
 var getTs = function () {
     let tsObj = new Date();
 
@@ -38,6 +40,12 @@ export class Player extends Schema {
     @type("number")
     y = Math.floor(Math.random() * 100);
 
+    @type("number")
+    w = 100;
+
+    @type("number")
+    h = 100;
+
     velocity = {
         x: 0,
         y: 0
@@ -54,8 +62,11 @@ export class Player extends Schema {
     @type("string")
     name = "Player";
 
-    constructor(name, colour) {
-        super(name, colour);
+    state = undefined;
+
+    constructor(name, colour, state) {
+        super(name, colour, state);
+        this.state = state;
         this.name = name.substring(0, 16);
         this.colour = "#" + colour;
     }
@@ -64,26 +75,39 @@ export class Player extends Schema {
         this.velocity.x = (this.velocity.x + (this.acceleration.x * 1.5)) * 0.8;
         this.x += this.velocity.x;
 
+        for (let obstacleId in this.state.obstacles) {
+            let obstacle = this.state.obstacles[obstacleId];
+            if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
+                if (this.velocity.x < 0) {
+                    this.x = obstacle.x + obstacle.w;
+                    this.velocity.x = 0;
+                } else if (this.velocity.x > 0) {
+                    this.x = obstacle.x - this.w;
+                    this.velocity.x = 0;
+                }
+            }
+        }
+
         this.velocity.y = (this.velocity.y + (this.acceleration.y * 1.5)) * 0.8;
         this.y += this.velocity.y;
+
+        for (let obstacleId in this.state.obstacles) {
+            let obstacle = this.state.obstacles[obstacleId];
+            if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
+                if (this.velocity.y < 0) {
+                    this.y = obstacle.y + obstacle.h;
+                    this.velocity.y = 0;
+                } else if (this.velocity.y > 0) {
+                    this.y = obstacle.y - this.w;
+                    this.velocity.y = 0;
+                }
+            }
+        }
 
         if (this.velocity.x < 0.001 && this.velocity.x > -0.001) {
             this.velocity.x = 0;
         } else if (this.velocity.y < 0.001 && this.velocity.y > -0.001) {
             this.velocity.y = 0;
-        }
-
-        if (this.x < 0) {
-            this.x = 0;
-        }
-        if (this.y < 0) {
-            this.y = 0;
-        }
-        if (this.x > 1000-100) {
-            this.x = 1000-100;
-        }
-        if (this.y > 1000-100) {
-            this.y = 1000-100;
         }
     }
 }
@@ -97,13 +121,16 @@ export class Obstacle extends Schema {
     w = 0;
     @type("number")
     h = 0;
+    @type("string")
+    colour = "F000000";
 
-    constructor(x, y, w, h) {
-        super(x, y, w, h);
+    constructor(x, y, w, h, colour) {
+        super(x, y, w, h, colour);
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
+        this.colour = colour;
     }
 }
 
@@ -114,7 +141,10 @@ export class State extends Schema {
 
     createPlayer (client: Client, name: string, colour: string) {
         if(colour == "FF0000" || colour == "0000FF") {
-            this.players[client.sessionId] = new Player(name, colour);
+            this.players[client.sessionId] = new Player(name, colour, this);
+            this.clients[client.sessionId] = client;
+        } else {
+            this.players[client.sessionId] = new Player(name, "FF0000", this);
             this.clients[client.sessionId] = client;
         }
     }
@@ -127,8 +157,8 @@ export class State extends Schema {
     @type({ map: Obstacle })
     obstacles = new MapSchema<Obstacle>();
 
-    createObstacle (id: string, x: number, y: number, w: number, h: number) {
-        this.obstacles[ id ] = new Obstacle(x, y, w, h);
+    createObstacle (id: number, x: number, y: number, w: number, h: number, colour: string) {
+        this.obstacles[ id ] = new Obstacle(x, y, w, h, colour);
     }
 
     removeObstacle (id: string) {
@@ -146,10 +176,9 @@ export class GameRoom extends Room<State> {
 
         this.setState(new State());
 
-        this.state.createObstacle("0", 0, 0, 1000, 1);
-        this.state.createObstacle("1", 0, 0, 1, 1000);
-        this.state.createObstacle("2", 1000, 0, 1, 1000);
-        this.state.createObstacle("3", 0, 1000, 1000, 1);
+        for (let i = 0; i < map.length; i++) {
+            this.state.createObstacle(i, map[i].x, map[i].y, map[i].w, map[i].h, map[i].colour);
+        }
 
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }

@@ -13,7 +13,7 @@
             height: 100px;
             position: absolute;
             z-index: -2;
-            border-radius: 50%;
+            border-radius: 10%;
             border: 5px solid black;
             padding-top: 24px;
             box-sizing: border-box;
@@ -23,7 +23,7 @@
         .obstacle {
             position: absolute;
             z-index: -1;
-            background: black;
+            border: 5px solid black;
         }
         #nameArea {
             display: flex;
@@ -54,8 +54,9 @@
             width: 100px;
             height: 100px;
             margin-top: 1%;
-            border-radius: 50%;
+            border-radius: 10%;
             border: 5px solid black;
+            margin: 5px;
         }
         #colourButtonRed {
             background: red;
@@ -64,13 +65,6 @@
         #colourButtonBlue {
             background: blue;
             float: left;
-        }
-        #error {
-            font-family: Tahoma, Geneva, sans-serif;
-            font-size: 16px;
-            color: red;
-            vertical-align: middle;
-            text-align: center;
         }
         body {
             overflow: hidden;
@@ -90,11 +84,11 @@
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
           <b id="error"><br></b>
           <div id="colours">
-              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; document.getElementById('error').innerHTML = '<br>'; this.getElementsByTagName('b')[0].innerHTML = 'Red Selected!'; document.getElementById('colourButtonBlue').childNodes[1].innerHTML = 'Blue Team!';">
-                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Red Team!</b>
+              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; startGame();">
+                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Red Team!</b>
               </button>
-              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; document.getElementById('error').innerHTML = '<br>'; this.getElementsByTagName('b')[0].innerHTML = 'Blue Selected!'; document.getElementById('colourButtonRed').childNodes[1].innerHTML = 'Red Team!';">
-                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Blue Team!</b>
+              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; startGame();">
+                  <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Blue Team!</b>
               </button>
           </div>
       </div>
@@ -114,6 +108,15 @@
         let room;
 
         startGame = function(name) {
+            name = document.getElementById("nameInput").value;
+            if (name == "Enter a name")
+            name = "";
+            document.getElementById("nameInput").remove();
+            document.getElementById("colourButtonRed").remove();
+            document.getElementById("colourButtonBlue").remove();
+            if (currentColour != "FF0000" || currentColour != "0000FF") {
+                currentColour == "FF0000";
+            }
             running = 1;
             this.name = name;
             document.getElementById("chatArea").hidden = false;
@@ -124,6 +127,7 @@
                 let obstacles = {};
 
                 let uniOffset = 50;
+                let border = 5;
 
                 currentId = room.sessionId;
 
@@ -138,8 +142,9 @@
                     dom.style.background = obstacle.colour;
                     dom.style.top = obstacle.y + "px";
                     dom.style.left = obstacle.y + "px";
-                    dom.style.width = obstacle.w + "px";
-                    dom.style.height = obstacle.h + "px";
+                    dom.style.width = obstacle.w - (border * 2) + "px";
+                    dom.style.height = obstacle.h - (border * 2) + "px";
+                    dom.style.background = obstacle.colour;
                     obstacles[id] = {
                         obstacle: obstacle,
                         dom: dom
@@ -290,37 +295,6 @@
                 window.addEventListener('resize', room.state.players.onChange);
 
             });
-        }
-
-        window.addEventListener("keydown", function (e) {
-            if (!running && e.which == 13) {
-                name = document.getElementById("nameInput").value;
-                if (name == "Enter a name")
-                name = "";
-                if (currentColour == "FF0000" || currentColour == "0000FF") {
-                    document.getElementById("nameInput").remove();
-                    document.getElementById("colourButtonRed").remove();
-                    document.getElementById("colourButtonBlue").remove();
-                    startGame(name, currentColour);
-                } else {
-                    document.getElementById("error").innerHTML = "Please select a team";
-                }
-            }
-        });
-
-        function checkOverflow(el)
-        {
-           var curOverflow = el.style.overflow;
-
-           if ( !curOverflow || curOverflow === "visible" )
-              el.style.overflow = "hidden";
-
-           var isOverflowing = el.clientWidth < el.scrollWidth
-              || el.clientHeight < el.scrollHeight;
-
-           el.style.overflow = curOverflow;
-
-           return isOverflowing;
         }
     </script>
   </body>
