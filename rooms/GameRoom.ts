@@ -2,28 +2,32 @@ import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 var rooms = new Array;
 
-var map = [{x: -10, y: -10, w: 4010, h: 10, colour: "#000000"}, {x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"}, {x: -10, y: -10, w: 10, h: 4010, colour: "#000000"}, {x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"}, {x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"}];
+var map = [
+{x: -10, y: -10, w: 4010, h: 10, colour: "#000000"},
+{x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"},
+{x: -10, y: -10, w: 10, h: 4010, colour: "#000000"},
+{x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"},
+{x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"},
+{x: 600, y: 200, w: 400, h: 100, colour: "#0000FF"}
+];
 
 function collides (rect, circle, collide_inside)
 {
-    // compute a center-to-center vector
     var half = { x: rect.w/2, y: rect.h/2 };
     var center = {
         x: circle.x - (rect.x+half.x),
         y: circle.y - (rect.y+half.y)};
 
-    // check circle position inside the rectangle quadrant
     var side = {
         x: Math.abs (center.x) - half.x,
         y: Math.abs (center.y) - half.y};
-    if (side.x >  circle.r || side.y >  circle.r) // outside
+    if (side.x >  circle.r || side.y >  circle.r)
         return false;
-    if (side.x < -circle.r && side.y < -circle.r) // inside
+    if (side.x < -circle.r && side.y < -circle.r)
         return collide_inside;
-    if (side.x < 0 || side.y < 0) // intersects side or corner
+    if (side.x < 0 || side.y < 0)
         return true;
 
-    // circle is near the corner
     return side.x*side.x + side.y*side.y  < circle.r*circle.r;
 }
 
@@ -69,6 +73,9 @@ export class Player extends Schema {
     @type("number")
     h = 100;
 
+    @type("string")
+    team = "red";
+
     velocity = {
         x: 0,
         y: 0
@@ -91,6 +98,11 @@ export class Player extends Schema {
 
     constructor(name, colour, state) {
         super(name, colour, state);
+        if (colour == "FF0000") {
+            this.team = "red";
+        } else {
+            this.team = "blue"
+        }
         this.state = state;
         this.name = name.substring(0, 16);
         this.colour = "#" + colour;
@@ -203,6 +215,62 @@ export class Obstacle extends Schema {
     }
 }
 
+export class Bullet extends Schema {
+    @type("number")
+    x = 0;
+    @type("number")
+    y = 0;
+    @type("number")
+    w = 10;
+    @type("number")
+    h = 10;
+    @type("number")
+    xvel = 0;
+    @type("number")
+    yvel = 0;
+    @type("number")
+    timer = 0;
+    @type("string")
+    id = "";
+    @type("string")
+    team = "red";
+    state = undefined;
+
+    constructor(id, x, y, angle, right, up, team, state) {
+        super(id, x, y, angle, right, up, team, state);
+        this.state = state;
+        this.team = team;
+        this.id = id;
+        this.x = x - 5;
+        this.y = y - 5;
+        if (right) {
+            this.xvel = 10*Math.cos(angle)
+        } else {
+            this.xvel = -10*Math.cos(angle)
+        }
+        if (up) {
+            this.yvel = -10*Math.sin(angle)
+        } else {
+            this.yvel = 10*Math.sin(angle)
+        }
+    }
+
+    move() {
+        this.x += this.xvel;
+        this.y += this.yvel;
+        this.timer += 1;
+        if (this.timer > 1800) {
+            delete this.state.bullets[this.id];
+        }
+        for (let obstacleId in this.state.obstacles) {
+            let obstacle = this.state.obstacles[obstacleId];
+            if (obstacle.x < this.x + this.w && obstacle.x + obstacle.w > this.x && obstacle.y < this.y + this.h && obstacle.y + obstacle.h > this.y) {
+                delete this.state.bullets[this.id];
+            }
+        }
+    }
+}
+
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
@@ -232,6 +300,17 @@ export class State extends Schema {
 
     removeObstacle (id: string) {
         delete this.obstacles[ id ];
+    }
+
+    @type({ map: Bullet })
+    bullets = new MapSchema<Bullet>();
+
+    createBullet (id: string, x: number, y: number, angle: number, right: boolean, up: boolean, team: string) {
+        this.bullets[ id ] = new Bullet(id, x, y, angle, right, up, team, this);
+    }
+
+    removeBullet (id: string) {
+        delete this.bullets[ id ];
     }
 }
 
@@ -339,6 +418,29 @@ export class GameRoom extends Room<State> {
                 }
                 break;
             }
+            case "MouseDown": {
+                let id = '_' + Math.random().toString(36).substr(2, 9);
+                let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
+                let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
+                let team = this.state.players[client.sessionId].team;
+                let xDiff = Math.abs(data.mouse.x - data.window.x);
+                let yDiff = Math.abs(data.mouse.y - data.window.y);
+                let angle = Math.abs(Math.atan(yDiff / xDiff));
+                let right = false;
+                let up = false;
+                if (data.mouse.x > data.window.x) {
+                    right = true;
+                } else if (data.mouse.x < data.window.x) {
+                    right = false;
+                }
+                if (data.mouse.y < data.window.y) {
+                    up = true;
+                } else if (data.mouse.x > data.window.x) {
+                    up = false;
+                }
+                this.state.createBullet(id, x, y, angle, right, up, team);
+                break;
+            }
             case "Message": {
                 console.log(getTs(), "\x1b[34mMessage (" + this.roomId + "): \x1b[32m" + data + "\x1b[37m");
                 this.broadcast(data);
@@ -357,6 +459,10 @@ export class GameRoom extends Room<State> {
         for(let id in this.state.players) {
             let player = this.state.players[id];
             player.movePlayer();
+        }
+        for (let id in this.state.bullets) {
+            let bullet = this.state.bullets[id];
+            bullet.move();
         }
     }
 }

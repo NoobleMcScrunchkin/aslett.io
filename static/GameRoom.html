@@ -25,6 +25,15 @@
             z-index: -1;
             border: 5px solid black;
         }
+        .bullet {
+            position: absolute;
+            border-radius: 50%;
+            z-index: -2;
+            background: black;
+            width: 10px;
+            height: 10px;
+            border: 1px solid black;
+        }
         #nameArea {
             display: flex;
             position: relative;
@@ -125,6 +134,7 @@
 
                 let players = {};
                 let obstacles = {};
+                let bullets = {};
 
                 let uniOffset = 50;
                 let border = 5;
@@ -136,10 +146,11 @@
                     y: window.innerHeight / 2
                 };
 
+                console.log(room.state.bullets);
+
                 room.state.obstacles.onAdd = function (obstacle, id) {
                     let dom = document.createElement("div");
                     dom.className = "obstacle";
-                    dom.style.background = obstacle.colour;
                     dom.style.top = obstacle.y + "px";
                     dom.style.left = obstacle.y + "px";
                     dom.style.width = obstacle.w - (border * 2) + "px";
@@ -150,6 +161,31 @@
                         dom: dom
                     };
                     document.body.appendChild(obstacles[id].dom);
+                }
+
+                room.state.bullets.onAdd = function (bullet, id) {
+                    let dom = document.createElement("div");
+                    dom.className = "bullet";
+                    dom.style.top = bullet.y + "px";
+                    dom.style.left = bullet.y + "px";
+                    dom.style.background = bullet.team;
+                    dom.style.width = (border * 2) + "px";
+                    dom.style.height = (border * 2) + "px";
+                    bullets[id] = {
+                        dom: dom,
+                        bullet: bullet
+                    };
+                    document.body.appendChild(bullets[id].dom);
+                    room.state.bullets.onChange();
+                }
+
+                room.state.bullets.onChange = function (bullet, id) {
+                    room.state.players.onChange();
+                }
+
+                room.state.bullets.onRemove = function (bullet, id) {
+                    document.body.removeChild(bullets[id].dom);
+                    delete bullets[id];
                 }
 
                 room.state.players.onAdd = function (player, sessionId) {
@@ -191,6 +227,9 @@
                     for (let obstacleId in obstacles) {
                         renderObstacle(obstacleId);
                     }
+                    for (let bulletId in bullets) {
+                        renderBullet(bulletId);
+                    }
                 }
 
                 room.onMessage((message) => {
@@ -223,6 +262,17 @@
                     let offset = {
                         x: obstacle.x - cameraPosition.x,
                         y: obstacle.y - cameraPosition.y
+                    };
+                    dom.style.left = (offset.x - uniOffset) + "px";
+                    dom.style.top = (offset.y - uniOffset) + "px";
+                }
+
+                let renderBullet = function(id) {
+                    let dom = bullets[id].dom;
+                    let bullet = bullets[id].bullet;
+                    let offset = {
+                        x: bullet.x - cameraPosition.x,
+                        y: bullet.y - cameraPosition.y
                     };
                     dom.style.left = (offset.x - uniOffset) + "px";
                     dom.style.top = (offset.y - uniOffset) + "px";
@@ -286,6 +336,10 @@
                     } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
                         sendMessage();
                     }
+                });
+
+                window.addEventListener("mousedown", e => {
+                    room.send({id: "MouseDown", data:{window: {x: window.innerWidth / 2, y: window.innerHeight / 2}, mouse: {x: e.x, y: e.y}}})
                 });
 
                 window.addEventListener("keyup", function(e) {
