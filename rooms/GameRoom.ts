@@ -76,6 +76,9 @@ export class Player extends Schema {
     @type("string")
     team = "red";
 
+    @type("boolean")
+    dead = false;
+
     velocity = {
         x: 0,
         y: 0
@@ -94,15 +97,18 @@ export class Player extends Schema {
 
     state = undefined;
 
-    radius = 50
+    radius = 50;
 
-    constructor(name, colour, state) {
-        super(name, colour, state);
+    id = "";
+
+    constructor(name, colour, state, id) {
+        super(name, colour, state, id);
         if (colour == "FF0000") {
             this.team = "red";
         } else {
             this.team = "blue"
         }
+        this.id = id;
         this.state = state;
         this.name = name.substring(0, 16);
         this.colour = "#" + colour;
@@ -190,6 +196,22 @@ export class Player extends Schema {
         } else if (this.velocity.y < 0.001 && this.velocity.y > -0.001) {
             this.velocity.y = 0;
         }
+
+        for (let bulletId in this.state.bullets) {
+            let bullet = this.state.bullets[bulletId];
+            let center = {
+                x: this.x + this.radius,
+                y: this.y + this.radius,
+                r: this.radius
+            };
+            if (collides(bullet, center, true)) {
+                if (bullet.team != this.team) {
+                    this.dead = true;
+                    delete this.state.bullets[bulletId];
+                    delete this.state.players[this.id];
+                }
+            }
+        }
     }
 }
 
@@ -276,12 +298,12 @@ export class State extends Schema {
     players = new MapSchema<Player>();
     clients = new Array();
 
-    createPlayer (client: Client, name: string, colour: string) {
+    createPlayer (client: Client, name: string, colour: string, id: string) {
         if(colour == "FF0000" || colour == "0000FF") {
-            this.players[client.sessionId] = new Player(name, colour, this);
+            this.players[client.sessionId] = new Player(name, colour, this, client.sessionId);
             this.clients[client.sessionId] = client;
         } else {
-            this.players[client.sessionId] = new Player(name, "FF0000", this);
+            this.players[client.sessionId] = new Player(name, "FF0000", this, client.sessionId);
             this.clients[client.sessionId] = client;
         }
     }
@@ -332,7 +354,7 @@ export class GameRoom extends Room<State> {
     }
 
     onJoin (client: Client, options) {
-        this.state.createPlayer(client, options.name, options.colour);
+        this.state.createPlayer(client, options.name, options.colour, client.sessionId);
         try {
             console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
             if (this.state.players[client.sessionId].name == "") {
@@ -549,7 +571,7 @@ stdin.on('data', function(data) {
                     } else {
                         rooms[data[1]].broadcast(rooms[data[1]].state.players[data[2]].name + " was kicked.");
                     }
-                    rooms[data[1]].state.clients[data[2]].close();
+                    delete rooms[data[1]].state.players[data[2]];
                     console.log(getTs(), "\x1b[32mClient kicked.\x1b[37m")
                 } else {
                     console.log(getTs(), "\x1b[31mClient does not exist.\x1b[37m")

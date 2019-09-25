@@ -53,6 +53,7 @@
         #nameInput {
             width: 30%;
             border: none;
+            margin-top: 10px;
             border-bottom: 2px solid black;
             font-size: 20px;
             outline: 0;
@@ -75,6 +76,14 @@
             background: blue;
             float: left;
         }
+        #error {
+            font-family: Tahoma, Geneva, sans-serif;
+            font-size: 16px;
+            pointer-events: none;
+            vertical-align: middle;
+            text-align: center;
+            color: red;
+        }
         body {
             overflow: hidden;
             background-position: 0px 0px;
@@ -90,6 +99,7 @@
   </head>
   <body style="background-color: white;">
       <div id="nameArea">
+          <b id="error"></b>
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
           <b id="error"><br></b>
           <div id="colours">
@@ -103,7 +113,6 @@
       </div>
       <div style="float: left; position: fixed; top: 0px; left: 0px; width: 20%; height: 100%; background: rgba(0,0,0,0.25)" id="chatArea" hidden=true>
           <input type="text" onclick="if (this.value == 'Chat') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Chat'}" style="outline: 0; font-size: 16px; background: none; border: none; border-bottom: 1px solid white; box-sizing:border-box; display: relative; width: 95%; padding: 5px; margin-top: 3px" id="chatInput" value="Chat">
-          <p id="chat" style="position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"></p>
       </div>
     <script>
         document.body.style.height = window.innerHeight;
@@ -120,9 +129,11 @@
             name = document.getElementById("nameInput").value;
             if (name == "Enter a name")
             name = "";
-            document.getElementById("nameInput").remove();
-            document.getElementById("colourButtonRed").remove();
-            document.getElementById("colourButtonBlue").remove();
+            document.getElementById("nameArea").hidden = true;
+            document.getElementById("nameInput").hidden = true;
+            document.getElementById("colourButtonRed").hidden = true;
+            document.getElementById("colourButtonBlue").hidden = true;
+            document.getElementById("error").hidden = true;
             if (currentColour != "FF0000" || currentColour != "0000FF") {
                 currentColour == "FF0000";
             }
@@ -218,8 +229,40 @@
                 }
 
                 room.state.players.onRemove = function (player, sessionId) {
-                    document.body.removeChild(players[sessionId].dom);
-                    delete players[sessionId];
+                    if (sessionId == currentId) {
+                        console.log(player.dead);
+                        running = false;
+                        for (let id in players) {
+                            document.body.removeChild(players[id].dom);
+                        }
+                        for (let id in obstacles) {
+                            document.body.removeChild(obstacles[id].dom);
+                        }
+                        for (let id in bullets) {
+                            document.body.removeChild(bullets[id].dom);
+                        }
+                        $('.chat').remove();
+                        players = {}
+                        obstacles = {}
+                        bullets = {}
+                        currentId = "";
+                        room.leave();
+                        window.removeEventListener("keyup", _keyup);
+                        window.removeEventListener("keydown", _keydown);
+                        window.removeEventListener("mousedown", _mousedown);
+                        window.removeEventListener("resize", _resize);
+                        document.getElementById("nameInput").value = "Enter a name";
+                        document.getElementById("chatArea").hidden = true;
+                        document.getElementById("nameArea").hidden = false;
+                        document.getElementById("nameInput").hidden = false;
+                        document.getElementById("error").hidden = false;
+                        document.getElementById("colourButtonRed").hidden = false;
+                        document.getElementById("colourButtonBlue").hidden = false;
+                        document.getElementById("error").textContent = "You Died";
+                    } else {
+                        document.body.removeChild(players[sessionId].dom);
+                        delete players[sessionId];
+                    }
                 }
 
                 room.state.players.onChange = function (player, sessionId) {
@@ -237,6 +280,7 @@
 
                 room.onMessage((message) => {
                     messagep = document.createElement("p");
+                    messagep.className = "chat";
                     messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
                     messagep.textContent = message;
                     $(messagep).insertAfter("#chatInput");
@@ -300,7 +344,7 @@
                     room.send({id: "Message", data: message});
                 }
 
-                window.addEventListener("keydown", function (e) {
+                let _keydown = function (e) {
                     if (document.getElementById("chatInput") != document.activeElement)
                     room.send({id: "KeyDown", data:{key: e.which}});
 
@@ -347,17 +391,30 @@
                     } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
                         sendMessage();
                     }
-                });
+                }
 
-                window.addEventListener("mousedown", e => {
+                window.addEventListener("keydown", _keydown);
+
+                let _mousedown = function(e) {
+                    if (running)
                     room.send({id: "MouseDown", data:{window: {x: window.innerWidth / 2, y: window.innerHeight / 2}, mouse: {x: e.x, y: e.y}}})
-                });
+                }
 
-                window.addEventListener("keyup", function(e) {
+                window.addEventListener("mousedown", _mousedown);
+
+                let _keyup = function(e) {
+                    if (running)
                     room.send({id: "KeyUp", data:{key: e.which}});
-                });
+                }
 
-                window.addEventListener('resize', room.state.players.onChange);
+                window.addEventListener("keyup", _keyup);
+
+                let _resize = function() {
+                    if (running)
+                    room.state.players.onChange();
+                }
+
+                window.addEventListener('resize', _resize);
 
             });
         }
