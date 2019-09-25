@@ -62,10 +62,10 @@ var getTs = function () {
 
 export class Player extends Schema {
     @type("number")
-    x = Math.floor(Math.random() * 100);
+    x = Math.floor(Math.random() * 100) + 5;
 
     @type("number")
-    y = Math.floor(Math.random() * 100);
+    y = Math.floor(Math.random() * 100) + 5;
 
     @type("number")
     w = 100;
