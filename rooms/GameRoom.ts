@@ -441,26 +441,28 @@ export class GameRoom extends Room<State> {
                 break;
             }
             case "MouseDown": {
-                let id = '_' + Math.random().toString(36).substr(2, 9);
-                let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
-                let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
-                let team = this.state.players[client.sessionId].team;
-                let xDiff = Math.abs(data.mouse.x - data.window.x);
-                let yDiff = Math.abs(data.mouse.y - data.window.y);
-                let angle = Math.abs(Math.atan(yDiff / xDiff));
-                let right = false;
-                let up = false;
-                if (data.mouse.x > data.window.x) {
-                    right = true;
-                } else if (data.mouse.x < data.window.x) {
-                    right = false;
+                if (this.state.players[client.sessionId] != undefined) {
+                    let id = '_' + Math.random().toString(36).substr(2, 9);
+                    let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
+                    let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
+                    let team = this.state.players[client.sessionId].team;
+                    let xDiff = Math.abs(data.mouse.x - data.window.x);
+                    let yDiff = Math.abs(data.mouse.y - data.window.y);
+                    let angle = Math.abs(Math.atan(yDiff / xDiff));
+                    let right = false;
+                    let up = false;
+                    if (data.mouse.x > data.window.x) {
+                        right = true;
+                    } else if (data.mouse.x < data.window.x) {
+                        right = false;
+                    }
+                    if (data.mouse.y < data.window.y) {
+                        up = true;
+                    } else if (data.mouse.x > data.window.x) {
+                        up = false;
+                    }
+                    this.state.createBullet(id, x, y, angle, right, up, team);
                 }
-                if (data.mouse.y < data.window.y) {
-                    up = true;
-                } else if (data.mouse.x > data.window.x) {
-                    up = false;
-                }
-                this.state.createBullet(id, x, y, angle, right, up, team);
                 break;
             }
             case "Message": {

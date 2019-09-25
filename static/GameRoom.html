@@ -158,79 +158,89 @@
                 };
 
                 room.state.obstacles.onAdd = function (obstacle, id) {
-                    let dom = document.createElement("div");
-                    dom.className = "obstacle";
-                    dom.style.top = obstacle.y + "px";
-                    dom.style.left = obstacle.y + "px";
-                    dom.style.width = obstacle.w - (border * 2) + "px";
-                    dom.style.height = obstacle.h - (border * 2) + "px";
-                    dom.style.background = obstacle.colour;
-                    obstacles[id] = {
-                        obstacle: obstacle,
-                        dom: dom
-                    };
-                    document.body.appendChild(obstacles[id].dom);
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "obstacle";
+                        dom.style.top = obstacle.y + "px";
+                        dom.style.left = obstacle.y + "px";
+                        dom.style.width = obstacle.w - (border * 2) + "px";
+                        dom.style.height = obstacle.h - (border * 2) + "px";
+                        dom.style.background = obstacle.colour;
+                        obstacles[id] = {
+                            obstacle: obstacle,
+                            dom: dom
+                        };
+                        document.body.appendChild(obstacles[id].dom);
+                    }
                 }
 
                 room.state.bullets.onAdd = function (bullet, id) {
-                    let dom = document.createElement("div");
-                    dom.className = "bullet";
-                    dom.style.top = bullet.y + "px";
-                    dom.style.left = bullet.y + "px";
-                    dom.style.background = bullet.team;
-                    dom.style.width = (border * 2) + "px";
-                    dom.style.height = (border * 2) + "px";
-                    if (document.body.style.backgroundColor == "white") {
-                        dom.style.border = "1px solid black";
-                    } else {
-                        dom.style.border = "1px solid white";
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "bullet";
+                        dom.style.top = bullet.y + "px";
+                        dom.style.left = bullet.y + "px";
+                        dom.style.background = bullet.team;
+                        dom.style.width = (border * 2) + "px";
+                        dom.style.height = (border * 2) + "px";
+                        if (document.body.style.backgroundColor == "white") {
+                            dom.style.border = "1px solid black";
+                        } else {
+                            dom.style.border = "1px solid white";
+                        }
+                        bullets[id] = {
+                            dom: dom,
+                            bullet: bullet
+                        };
+                        document.body.appendChild(bullets[id].dom);
+                        room.state.bullets.onChange();
                     }
-                    bullets[id] = {
-                        dom: dom,
-                        bullet: bullet
-                    };
-                    document.body.appendChild(bullets[id].dom);
-                    room.state.bullets.onChange();
                 }
 
                 room.state.bullets.onChange = function (bullet, id) {
-                    room.state.players.onChange();
+                    if (running) {
+                        room.state.players.onChange();
+                    }
                 }
 
                 room.state.bullets.onRemove = function (bullet, id) {
-                    document.body.removeChild(bullets[id].dom);
-                    delete bullets[id];
+                    if (running) {
+                        document.body.removeChild(bullets[id].dom);
+                        delete bullets[id];
+                    }
                 }
 
                 room.state.players.onAdd = function (player, sessionId) {
-                    let dom = document.createElement("div");
-                    dom.className = "player";
-                    domb = document.createElement("b");
-                    domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
-                    domb.textContent = player.name;
-                    dom.style.background = player.colour;
-                    if (document.body.style.backgroundColor == "white") {
-                        dom.style.border = "5px solid black";
-                    } else {
-                        dom.style.border = "5px solid white";
-                    }
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "player";
+                        domb = document.createElement("b");
+                        domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
+                        domb.textContent = player.name;
+                        dom.style.background = player.colour;
+                        if (document.body.style.backgroundColor == "white") {
+                            dom.style.border = "5px solid black";
+                        } else {
+                            dom.style.border = "5px solid white";
+                        }
 
-                    players[sessionId] = {
-                        player: player,
-                        dom: dom
-                    };
+                        players[sessionId] = {
+                            player: player,
+                            dom: dom
+                        };
 
-                    document.body.appendChild(players[sessionId].dom);
-                    players[sessionId].dom.appendChild(domb);
+                        document.body.appendChild(players[sessionId].dom);
+                        players[sessionId].dom.appendChild(domb);
 
-                    for (let playerSessionId in players) {
-                        renderPlayer(playerSessionId);
+                        for (let playerSessionId in players) {
+                            renderPlayer(playerSessionId);
+                        }
                     }
                 }
 
                 room.state.players.onRemove = function (player, sessionId) {
                     if (sessionId == currentId) {
-                        console.log(player.dead);
+                        room.leave();
                         running = false;
                         for (let id in players) {
                             document.body.removeChild(players[id].dom);
@@ -242,11 +252,12 @@
                             document.body.removeChild(bullets[id].dom);
                         }
                         $('.chat').remove();
-                        players = {}
-                        obstacles = {}
-                        bullets = {}
+                        players = undefined;
+                        obstacles = undefined;
+                        bullets = undefined;
+                        room = undefined;
+                        client = undefined;
                         currentId = "";
-                        room.leave();
                         window.removeEventListener("keyup", _keyup);
                         window.removeEventListener("keydown", _keydown);
                         window.removeEventListener("mousedown", _mousedown);
@@ -260,31 +271,37 @@
                         document.getElementById("colourButtonBlue").hidden = false;
                         document.getElementById("error").textContent = "You Died";
                     } else {
-                        document.body.removeChild(players[sessionId].dom);
-                        delete players[sessionId];
+                        if (running) {
+                            document.body.removeChild(players[sessionId].dom);
+                            delete players[sessionId];
+                        }
                     }
                 }
 
                 room.state.players.onChange = function (player, sessionId) {
-                    moveCamera();
-                    for (let playerSessionId in players) {
-                        renderPlayer(playerSessionId);
-                    }
-                    for (let obstacleId in obstacles) {
-                        renderObstacle(obstacleId);
-                    }
-                    for (let bulletId in bullets) {
-                        renderBullet(bulletId);
+                    if (running) {
+                        moveCamera();
+                        for (let playerSessionId in players) {
+                            renderPlayer(playerSessionId);
+                        }
+                        for (let obstacleId in obstacles) {
+                            renderObstacle(obstacleId);
+                        }
+                        for (let bulletId in bullets) {
+                            renderBullet(bulletId);
+                        }
                     }
                 }
 
                 room.onMessage((message) => {
-                    messagep = document.createElement("p");
-                    messagep.className = "chat";
-                    messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
-                    messagep.textContent = message;
-                    $(messagep).insertAfter("#chatInput");
-                    room.state.players.onChange();
+                    if (running) {
+                        messagep = document.createElement("p");
+                        messagep.className = "chat";
+                        messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
+                        messagep.textContent = message;
+                        $(messagep).insertAfter("#chatInput");
+                        room.state.players.onChange();
+                    }
                 });
 
                 let renderPlayer = function(sessionId) {
@@ -326,12 +343,14 @@
                 }
 
                 let moveCamera = function() {
-                    cameraPosition = {
-                        x: players[currentId].player.x - window.innerWidth / 2,
-                        y: players[currentId].player.y - window.innerHeight / 2
-                    };
+                    if (running) {
+                        cameraPosition = {
+                            x: players[currentId].player.x - window.innerWidth / 2,
+                            y: players[currentId].player.y - window.innerHeight / 2
+                        };
 
-                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
+                        document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
+                    }
                 }
 
                 let sendMessage = function() {
