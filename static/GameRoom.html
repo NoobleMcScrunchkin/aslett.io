@@ -84,6 +84,14 @@
             text-align: center;
             color: red;
         }
+        #respawn {
+            font-family: Tahoma, Geneva, sans-serif;
+            font-size: 16px;
+            pointer-events: none;
+            vertical-align: middle;
+            text-align: center;
+            color: grey;
+        }
         body {
             overflow: hidden;
             background-position: 0px 0px;
@@ -99,9 +107,9 @@
   </head>
   <body style="background-color: white;">
       <div id="nameArea">
+          <b id="respawn"></b>
           <b id="error"></b>
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
-          <b id="error"><br></b>
           <div id="colours">
               <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; startGame();">
                   <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Red Team!</b>
@@ -134,6 +142,7 @@
             document.getElementById("colourButtonRed").hidden = true;
             document.getElementById("colourButtonBlue").hidden = true;
             document.getElementById("error").hidden = true;
+            document.getElementById("respawn").hidden = true;
             if (currentColour != "FF0000" || currentColour != "0000FF") {
                 currentColour == "FF0000";
             }
@@ -239,43 +248,43 @@
                 }
 
                 room.state.players.onRemove = function (player, sessionId) {
-                    if (sessionId == currentId) {
-                        room.leave();
-                        running = false;
-                        for (let id in players) {
-                            document.body.removeChild(players[id].dom);
-                        }
-                        for (let id in obstacles) {
-                            document.body.removeChild(obstacles[id].dom);
-                        }
-                        for (let id in bullets) {
-                            document.body.removeChild(bullets[id].dom);
-                        }
-                        $('.chat').remove();
-                        players = undefined;
-                        obstacles = undefined;
-                        bullets = undefined;
-                        room = undefined;
-                        client = undefined;
-                        currentId = "";
-                        window.removeEventListener("keyup", _keyup);
-                        window.removeEventListener("keydown", _keydown);
-                        window.removeEventListener("mousedown", _mousedown);
-                        window.removeEventListener("resize", _resize);
-                        document.getElementById("nameInput").value = "Enter a name";
-                        document.getElementById("chatArea").hidden = true;
-                        document.getElementById("nameArea").hidden = false;
-                        document.getElementById("nameInput").hidden = false;
-                        document.getElementById("error").hidden = false;
-                        document.getElementById("colourButtonRed").hidden = false;
-                        document.getElementById("colourButtonBlue").hidden = false;
-                        document.getElementById("error").textContent = "You Died";
-                    } else {
-                        if (running) {
-                            document.body.removeChild(players[sessionId].dom);
-                            delete players[sessionId];
-                        }
+                    // if (sessionId == currentId) {
+                    //     room.leave();
+                    //     running = false;
+                    //     for (let id in players) {
+                    //         document.body.removeChild(players[id].dom);
+                    //     }
+                    //     for (let id in obstacles) {
+                    //         document.body.removeChild(obstacles[id].dom);
+                    //     }
+                    //     for (let id in bullets) {
+                    //         document.body.removeChild(bullets[id].dom);
+                    //     }
+                    //     $('.chat').remove();
+                    //     players = undefined;
+                    //     obstacles = undefined;
+                    //     bullets = undefined;
+                    //     room = undefined;
+                    //     client = undefined;
+                    //     currentId = "";
+                    //     window.removeEventListener("keyup", _keyup);
+                    //     window.removeEventListener("keydown", _keydown);
+                    //     window.removeEventListener("mousedown", _mousedown);
+                    //     window.removeEventListener("resize", _resize);
+                    //     document.getElementById("nameInput").value = "Enter a name";
+                    //     document.getElementById("chatArea").hidden = true;
+                    //     document.getElementById("nameArea").hidden = false;
+                    //     document.getElementById("nameInput").hidden = false;
+                    //     document.getElementById("error").hidden = false;
+                    //     document.getElementById("colourButtonRed").hidden = false;
+                    //     document.getElementById("colourButtonBlue").hidden = false;
+                    //     document.getElementById("error").textContent = "You Died";
+                    // } else {
+                    if (running) {
+                        document.body.removeChild(players[sessionId].dom);
+                        delete players[sessionId];
                     }
+                    // }
                 }
 
                 room.state.players.onChange = function (player, sessionId) {
@@ -307,16 +316,31 @@
                 let renderPlayer = function(sessionId) {
                     let dom = players[sessionId].dom;
                     let player = players[sessionId].player;
-                    if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
-                        let offset = {
-                            x: player.x - cameraPosition.x,
-                            y: player.y - cameraPosition.y
-                        };
-                        dom.hidden = false;
-                        dom.style.left = (offset.x - uniOffset) + "px";
-                        dom.style.top = (offset.y - uniOffset) + "px";
+                    if (!players[sessionId].player.dead) {
+                        if (sessionId == currentId) {
+                            document.getElementById("respawn").hidden = true;
+                            document.getElementById("respawn").textContent = "";
+                        }
+                        if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
+                            let offset = {
+                                x: player.x - cameraPosition.x,
+                                y: player.y - cameraPosition.y
+                            };
+                            dom.hidden = false;
+                            dom.style.left = (offset.x - uniOffset) + "px";
+                            dom.style.top = (offset.y - uniOffset) + "px";
+                        } else {
+                            dom.hidden = true;
+                        }
                     } else {
                         dom.hidden = true;
+                        if (sessionId == currentId) {
+                            document.getElementById("respawn").hidden = false;
+                            let timer = (5 - (player.timer / 60)).toString().substring(0,3);
+                            if (timer.length == 1)
+                            timer += ".0";
+                            document.getElementById("respawn").textContent = "Respawning in " + timer + "s";
+                        }
                     }
                 }
 
@@ -343,14 +367,35 @@
                 }
 
                 let moveCamera = function() {
-                    if (running) {
+                    if (!players[currentId].player.dead) {
                         cameraPosition = {
                             x: players[currentId].player.x - window.innerWidth / 2,
                             y: players[currentId].player.y - window.innerHeight / 2
                         };
-
-                        document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
+                    } else {
+                        let spectatePlayer = undefined;
+                        for (let playerId in players) {
+                            if (playerId != currentId) {
+                                if (players[playerId].player.team == players[currentId].player.team) {
+                                    spectatePlayer = players[playerId];
+                                    break;
+                                }
+                            }
+                        }
+                        if (spectatePlayer != undefined) {
+                            cameraPosition = {
+                                x: spectatePlayer.player.x - window.innerWidth / 2,
+                                y: spectatePlayer.player.y - window.innerHeight / 2
+                            };
+                        } else {
+                            cameraPosition = {
+                                x: window.innerWidth / 2,
+                                y: window.innerHeight / 2
+                            };
+                        }
                     }
+
+                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
                 }
 
                 let sendMessage = function() {

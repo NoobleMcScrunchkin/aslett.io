@@ -101,6 +101,9 @@ export class Player extends Schema {
 
     id = "";
 
+    @type("number")
+    timer = 0;
+
     constructor(name, colour, state, id) {
         super(name, colour, state, id);
         if (colour == "FF0000") {
@@ -115,101 +118,115 @@ export class Player extends Schema {
     }
 
     movePlayer() {
-        this.velocity.x = (this.velocity.x + (this.acceleration.x * 1.5)) * 0.8;
-        this.x += this.velocity.x;
+        if (!this.dead) {
+            this.velocity.x = (this.velocity.x + (this.acceleration.x * 1.5)) * 0.8;
+            this.x += this.velocity.x;
 
-        for (let obstacleId in this.state.obstacles) {
-            let obstacle = this.state.obstacles[obstacleId];
-            let center = {
-                x: this.x + this.radius,
-                y: this.y + this.radius,
-                r: this.radius
-            };
-            if (collides(obstacle, center, true)) {
-                if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h - center.r && this.y + this.h > obstacle.y + center.r) {
-                    if (this.velocity.x < 0) {
-                        this.x = obstacle.x + obstacle.w + 1;
-                    } else if (this.velocity.x > 0) {
-                        this.x = obstacle.x - this.w - 1;
-                    }
-                } else {
-                    if (this.velocity.x > 0) {
-                        if (center.y < obstacle.y) {
-                            this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
-                        } else {
-                            this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+            for (let obstacleId in this.state.obstacles) {
+                let obstacle = this.state.obstacles[obstacleId];
+                let center = {
+                    x: this.x + this.radius,
+                    y: this.y + this.radius,
+                    r: this.radius
+                };
+                if (collides(obstacle, center, true)) {
+                    if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h - center.r && this.y + this.h > obstacle.y + center.r) {
+                        if (this.velocity.x < 0) {
+                            this.x = obstacle.x + obstacle.w + 1;
+                        } else if (this.velocity.x > 0) {
+                            this.x = obstacle.x - this.w - 1;
                         }
-                        this.x -= 1;
-                    } else if (this.velocity.x < 0) {
-                        if (center.y < obstacle.y) {
-                            this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
-                        } else {
-                            this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+                    } else {
+                        if (this.velocity.x > 0) {
+                            if (center.y < obstacle.y) {
+                                this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
+                            } else {
+                                this.x = obstacle.x - Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+                            }
+                            this.x -= 1;
+                        } else if (this.velocity.x < 0) {
+                            if (center.y < obstacle.y) {
+                                this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y - center.y)**2) )**0.5) - center.r;
+                            } else {
+                                this.x = obstacle.x + obstacle.w + Math.abs( ( ( (center.r)**2) - ( (obstacle.y + obstacle.h - center.y)**2) )**0.5) - center.r;
+                            }
+                            this.x += 1;
                         }
-                        this.x += 1;
                     }
+                    this.velocity.x = 0;
                 }
-                this.velocity.x = 0;
             }
-        }
 
-        this.velocity.y = (this.velocity.y + (this.acceleration.y * 1.5)) * 0.8;
-        this.y += this.velocity.y;
+            this.velocity.y = (this.velocity.y + (this.acceleration.y * 1.5)) * 0.8;
+            this.y += this.velocity.y;
 
-        for (let obstacleId in this.state.obstacles) {
-            let obstacle = this.state.obstacles[obstacleId];
-            let center = {
-                x: this.x + this.radius,
-                y: this.y + this.radius,
-                r: this.radius
-            };
-            if (collides(obstacle, center, true)) {
-                if (this.x < obstacle.x + obstacle.w - center.r && this.x + this.w > obstacle.x + center.r && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
-                    if (this.velocity.y < 0) {
-                        this.y = obstacle.y + obstacle.h + 1;
-                    } else if (this.velocity.y > 0) {
-                        this.y = obstacle.y - this.h - 1;
-                    }
-                } else {
-                    if (this.velocity.y > 0) {
-                        if (center.x < obstacle.x) {
-                            this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
-                        } else {
-                            this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+            for (let obstacleId in this.state.obstacles) {
+                let obstacle = this.state.obstacles[obstacleId];
+                let center = {
+                    x: this.x + this.radius,
+                    y: this.y + this.radius,
+                    r: this.radius
+                };
+                if (collides(obstacle, center, true)) {
+                    if (this.x < obstacle.x + obstacle.w - center.r && this.x + this.w > obstacle.x + center.r && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
+                        if (this.velocity.y < 0) {
+                            this.y = obstacle.y + obstacle.h + 1;
+                        } else if (this.velocity.y > 0) {
+                            this.y = obstacle.y - this.h - 1;
                         }
-                        this.y -= 1;
-                    } else if (this.velocity.y < 0) {
-                        if (center.x < obstacle.x) {
-                            this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
-                        } else {
-                            this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+                    } else {
+                        if (this.velocity.y > 0) {
+                            if (center.x < obstacle.x) {
+                                this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
+                            } else {
+                                this.y = obstacle.y - Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+                            }
+                            this.y -= 1;
+                        } else if (this.velocity.y < 0) {
+                            if (center.x < obstacle.x) {
+                                this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x - center.x)**2) )**0.5) - center.r;
+                            } else {
+                                this.y = obstacle.y + obstacle.h + Math.abs( ( ( (center.r)**2) - ( (obstacle.x + obstacle.w - center.x)**2) )**0.5) - center.r;
+                            }
+                            this.y += 1;
                         }
-                        this.y += 1;
                     }
+                    this.velocity.y = 0;
                 }
+            }
+
+            if (this.velocity.x < 0.001 && this.velocity.x > -0.001) {
+                this.velocity.x = 0;
+            } else if (this.velocity.y < 0.001 && this.velocity.y > -0.001) {
                 this.velocity.y = 0;
             }
-        }
 
-        if (this.velocity.x < 0.001 && this.velocity.x > -0.001) {
-            this.velocity.x = 0;
-        } else if (this.velocity.y < 0.001 && this.velocity.y > -0.001) {
-            this.velocity.y = 0;
-        }
-
-        for (let bulletId in this.state.bullets) {
-            let bullet = this.state.bullets[bulletId];
-            let center = {
-                x: this.x + this.radius,
-                y: this.y + this.radius,
-                r: this.radius
-            };
-            if (collides(bullet, center, true)) {
-                if (bullet.team != this.team) {
-                    this.dead = true;
-                    delete this.state.bullets[bulletId];
-                    delete this.state.players[this.id];
+            for (let bulletId in this.state.bullets) {
+                let bullet = this.state.bullets[bulletId];
+                let center = {
+                    x: this.x + this.radius,
+                    y: this.y + this.radius,
+                    r: this.radius
+                };
+                if (collides(bullet, center, true)) {
+                    if (bullet.team != this.team) {
+                        this.dead = true;
+                        delete this.state.bullets[bulletId];
+                        // delete this.state.players[this.id];
+                    }
                 }
+            }
+        } else {
+            this.timer += 1;
+            if (this.timer > 300) {
+                this.dead = false;
+                this.timer = 0;
+                this.x = Math.floor(Math.random() * 100) + 5;
+                this.y = Math.floor(Math.random() * 100) + 5;
+                this.velocity.x = 0;
+                this.velocity.y = 0;
+                this.acceleration.x = 0;
+                this.acceleration.y = 0;
             }
         }
     }
@@ -442,26 +459,28 @@ export class GameRoom extends Room<State> {
             }
             case "MouseDown": {
                 if (this.state.players[client.sessionId] != undefined) {
-                    let id = '_' + Math.random().toString(36).substr(2, 9);
-                    let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
-                    let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
-                    let team = this.state.players[client.sessionId].team;
-                    let xDiff = Math.abs(data.mouse.x - data.window.x);
-                    let yDiff = Math.abs(data.mouse.y - data.window.y);
-                    let angle = Math.abs(Math.atan(yDiff / xDiff));
-                    let right = false;
-                    let up = false;
-                    if (data.mouse.x > data.window.x) {
-                        right = true;
-                    } else if (data.mouse.x < data.window.x) {
-                        right = false;
+                    if (!this.state.players[client.sessionId].dead) {
+                        let id = '_' + Math.random().toString(36).substr(2, 9);
+                        let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
+                        let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
+                        let team = this.state.players[client.sessionId].team;
+                        let xDiff = Math.abs(data.mouse.x - data.window.x);
+                        let yDiff = Math.abs(data.mouse.y - data.window.y);
+                        let angle = Math.abs(Math.atan(yDiff / xDiff));
+                        let right = false;
+                        let up = false;
+                        if (data.mouse.x > data.window.x) {
+                            right = true;
+                        } else if (data.mouse.x < data.window.x) {
+                            right = false;
+                        }
+                        if (data.mouse.y < data.window.y) {
+                            up = true;
+                        } else if (data.mouse.x > data.window.x) {
+                            up = false;
+                        }
+                        this.state.createBullet(id, x, y, angle, right, up, team);
                     }
-                    if (data.mouse.y < data.window.y) {
-                        up = true;
-                    } else if (data.mouse.x > data.window.x) {
-                        up = false;
-                    }
-                    this.state.createBullet(id, x, y, angle, right, up, team);
                 }
                 break;
             }
