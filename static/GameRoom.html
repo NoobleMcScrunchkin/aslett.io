@@ -248,43 +248,43 @@
                 }
 
                 room.state.players.onRemove = function (player, sessionId) {
-                    // if (sessionId == currentId) {
-                    //     room.leave();
-                    //     running = false;
-                    //     for (let id in players) {
-                    //         document.body.removeChild(players[id].dom);
-                    //     }
-                    //     for (let id in obstacles) {
-                    //         document.body.removeChild(obstacles[id].dom);
-                    //     }
-                    //     for (let id in bullets) {
-                    //         document.body.removeChild(bullets[id].dom);
-                    //     }
-                    //     $('.chat').remove();
-                    //     players = undefined;
-                    //     obstacles = undefined;
-                    //     bullets = undefined;
-                    //     room = undefined;
-                    //     client = undefined;
-                    //     currentId = "";
-                    //     window.removeEventListener("keyup", _keyup);
-                    //     window.removeEventListener("keydown", _keydown);
-                    //     window.removeEventListener("mousedown", _mousedown);
-                    //     window.removeEventListener("resize", _resize);
-                    //     document.getElementById("nameInput").value = "Enter a name";
-                    //     document.getElementById("chatArea").hidden = true;
-                    //     document.getElementById("nameArea").hidden = false;
-                    //     document.getElementById("nameInput").hidden = false;
-                    //     document.getElementById("error").hidden = false;
-                    //     document.getElementById("colourButtonRed").hidden = false;
-                    //     document.getElementById("colourButtonBlue").hidden = false;
-                    //     document.getElementById("error").textContent = "You Died";
-                    // } else {
-                    if (running) {
-                        document.body.removeChild(players[sessionId].dom);
-                        delete players[sessionId];
+                    if (sessionId == currentId) {
+                        room.leave();
+                        running = false;
+                        for (let id in players) {
+                            document.body.removeChild(players[id].dom);
+                        }
+                        for (let id in obstacles) {
+                            document.body.removeChild(obstacles[id].dom);
+                        }
+                        for (let id in bullets) {
+                            document.body.removeChild(bullets[id].dom);
+                        }
+                        $('.chat').remove();
+                        players = undefined;
+                        obstacles = undefined;
+                        bullets = undefined;
+                        room = undefined;
+                        client = undefined;
+                        currentId = "";
+                        window.removeEventListener("keyup", _keyup);
+                        window.removeEventListener("keydown", _keydown);
+                        window.removeEventListener("mousedown", _mousedown);
+                        window.removeEventListener("resize", _resize);
+                        document.getElementById("nameInput").value = "Enter a name";
+                        document.getElementById("chatArea").hidden = true;
+                        document.getElementById("nameArea").hidden = false;
+                        document.getElementById("nameInput").hidden = false;
+                        document.getElementById("error").hidden = false;
+                        document.getElementById("colourButtonRed").hidden = false;
+                        document.getElementById("colourButtonBlue").hidden = false;
+                        document.getElementById("error").textContent = "You were Kicked";
+                    } else {
+                        if (running) {
+                            document.body.removeChild(players[sessionId].dom);
+                            delete players[sessionId];
+                        }
                     }
-                    // }
                 }
 
                 room.state.players.onChange = function (player, sessionId) {
@@ -399,61 +399,65 @@
                 }
 
                 let sendMessage = function() {
-                    if (room.state.players[currentId].name == "") {
-                        message = "Player" + ": " + document.getElementById("chatInput").value;
-                    } else {
-                        message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
+                    if (running) {
+                        if (room.state.players[currentId].name == "") {
+                            message = "Player" + ": " + document.getElementById("chatInput").value;
+                        } else {
+                            message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
+                        }
+                        document.getElementById("chatInput").value = "";
+                        room.send({id: "Message", data: message});
                     }
-                    document.getElementById("chatInput").value = "";
-                    room.send({id: "Message", data: message});
                 }
 
                 let _keydown = function (e) {
-                    if (document.getElementById("chatInput") != document.activeElement)
-                    room.send({id: "KeyDown", data:{key: e.which}});
+                    if (running) {
+                        if (document.getElementById("chatInput") != document.activeElement)
+                        room.send({id: "KeyDown", data:{key: e.which}});
 
-                    if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
-                        if (document.body.style.backgroundColor == "white") {
-                            document.body.style.backgroundColor = "black";
-                            divs = document.getElementsByClassName('player');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "5px solid White";
-                                divs[i].style.color = "White";
+                        if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
+                            if (document.body.style.backgroundColor == "white") {
+                                document.body.style.backgroundColor = "black";
+                                divs = document.getElementsByClassName('player');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "5px solid White";
+                                    divs[i].style.color = "White";
+                                }
+                                divs = document.getElementsByClassName('obstacle');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "5px solid white";
+                                }
+                                divs = document.getElementsByClassName('bullet');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "1px solid white";
+                                }
+                                document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
+                                document.getElementById("chatArea").style.color = "white";
+                                document.getElementById("chatInput").style.color = "White";
+                                document.body.style.backgroundImage = "url('res/gridDark.png')";
+                            } else {
+                                document.body.style.backgroundColor = "white";
+                                divs = document.getElementsByClassName('player');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "5px solid black";
+                                    divs[i].style.color = "black";
+                                }
+                                divs = document.getElementsByClassName('obstacle');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "5px solid black";
+                                }
+                                divs = document.getElementsByClassName('bullet');
+                                for (i = 0; i != divs.length; i++) {
+                                    divs[i].style.border = "1px solid black";
+                                }
+                                document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
+                                document.getElementById("chatArea").style.color = "black";
+                                document.getElementById("chatInput").style.color = "black";
+                                document.body.style.backgroundImage = "url('res/grid.png')";
                             }
-                            divs = document.getElementsByClassName('obstacle');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "5px solid white";
-                            }
-                            divs = document.getElementsByClassName('bullet');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "1px solid white";
-                            }
-                            document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
-                            document.getElementById("chatArea").style.color = "white";
-                            document.getElementById("chatInput").style.color = "White";
-                            document.body.style.backgroundImage = "url('res/gridDark.png')";
-                        } else {
-                            document.body.style.backgroundColor = "white";
-                            divs = document.getElementsByClassName('player');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "5px solid black";
-                                divs[i].style.color = "black";
-                            }
-                            divs = document.getElementsByClassName('obstacle');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "5px solid black";
-                            }
-                            divs = document.getElementsByClassName('bullet');
-                            for (i = 0; i != divs.length; i++) {
-                                divs[i].style.border = "1px solid black";
-                            }
-                            document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
-                            document.getElementById("chatArea").style.color = "black";
-                            document.getElementById("chatInput").style.color = "black";
-                            document.body.style.backgroundImage = "url('res/grid.png')";
+                        } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
+                            sendMessage();
                         }
-                    } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
-                        sendMessage();
                     }
                 }
 

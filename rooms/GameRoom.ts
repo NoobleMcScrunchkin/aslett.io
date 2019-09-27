@@ -8,6 +8,7 @@ var map = [
 {x: -10, y: -10, w: 10, h: 4010, colour: "#000000"},
 {x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"},
 {x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"},
+{x: 400, y: 400, w: 100, h: 100, colour: "#FF0000"},
 {x: 600, y: 200, w: 400, h: 100, colour: "#0000FF"}
 ];
 
@@ -407,21 +408,25 @@ export class GameRoom extends Room<State> {
                 switch(data.key) {
                     case 37:
                     case 65: {
+                        if (this.state.players[client.sessionId] != undefined)
                         this.state.players[client.sessionId].acceleration.x = -1;
                         break;
                     }
                     case 38:
                     case 87: {
+                        if (this.state.players[client.sessionId] != undefined)
                         this.state.players[client.sessionId].acceleration.y = -1;
                         break;
                     }
                     case 39:
                     case 68: {
+                        if (this.state.players[client.sessionId] != undefined)
                         this.state.players[client.sessionId].acceleration.x = 1;
                         break;
                     }
                     case 40:
                     case 83: {
+                        if (this.state.players[client.sessionId] != undefined)
                         this.state.players[client.sessionId].acceleration.y = 1;
                         break;
                     }
@@ -432,24 +437,28 @@ export class GameRoom extends Room<State> {
                 switch(data.key) {
                     case 37:
                     case 65: {
+                        if (this.state.players[client.sessionId] != undefined)
                         if(this.state.players[client.sessionId].acceleration.x == -1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 38:
                     case 87: {
+                        if (this.state.players[client.sessionId] != undefined)
                         if(this.state.players[client.sessionId].acceleration.y == -1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
                     }
                     case 39:
                     case 68: {
+                        if (this.state.players[client.sessionId] != undefined)
                         if(this.state.players[client.sessionId].acceleration.x == 1)
                             this.state.players[client.sessionId].acceleration.x = 0;
                         break;
                     }
                     case 40:
                     case 83: {
+                        if (this.state.players[client.sessionId] != undefined)
                         if(this.state.players[client.sessionId].acceleration.y == 1)
                             this.state.players[client.sessionId].acceleration.y = 0;
                         break;
