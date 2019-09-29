@@ -109,6 +109,12 @@ export class Player extends Schema {
     @type("number")
     timer = 0;
 
+    @type("number")
+    bTimer = 0;
+
+    @type("boolean")
+    shot = false;
+
     constructor(name, colour, state, id, userId) {
         super(name, colour, state, id, userId);
         if (colour == "FF0000") {
@@ -218,11 +224,19 @@ export class Player extends Schema {
                     if (bullet.team != this.team) {
                         this.dead = true;
                         delete this.state.bullets[bulletId];
-                        // delete this.state.players[this.id];
                     }
                 }
             }
+
+            if (this.shot) {
+                this.bTimer += 1;
+                if (this.bTimer > 15) {
+                    this.shot = false;
+                    this.bTimer = 0;
+                }
+            }
         } else {
+            this.bTimer = 0;
             this.timer += 1;
             if (this.timer > 300) {
                 this.dead = false;
@@ -496,26 +510,29 @@ export class GameRoom extends Room<State> {
             case "MouseDown": {
                 if (this.state.players[client.sessionId] != undefined) {
                     if (!this.state.players[client.sessionId].dead) {
-                        let id = '_' + Math.random().toString(36).substr(2, 9);
-                        let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
-                        let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
-                        let team = this.state.players[client.sessionId].team;
-                        let xDiff = Math.abs(data.mouse.x - data.window.x);
-                        let yDiff = Math.abs(data.mouse.y - data.window.y);
-                        let angle = Math.abs(Math.atan(yDiff / xDiff));
-                        let right = false;
-                        let up = false;
-                        if (data.mouse.x > data.window.x) {
-                            right = true;
-                        } else if (data.mouse.x < data.window.x) {
-                            right = false;
+                        if (!this.state.players[client.sessionId].shot) {
+                            this.state.players[client.sessionId].shot = true;
+                            let id = '_' + Math.random().toString(36).substr(2, 9);
+                            let x = this.state.players[client.sessionId].x + this.state.players[client.sessionId].radius;
+                            let y = this.state.players[client.sessionId].y + this.state.players[client.sessionId].radius;
+                            let team = this.state.players[client.sessionId].team;
+                            let xDiff = Math.abs(data.mouse.x - data.window.x);
+                            let yDiff = Math.abs(data.mouse.y - data.window.y);
+                            let angle = Math.abs(Math.atan(yDiff / xDiff));
+                            let right = false;
+                            let up = false;
+                            if (data.mouse.x > data.window.x) {
+                                right = true;
+                            } else if (data.mouse.x < data.window.x) {
+                                right = false;
+                            }
+                            if (data.mouse.y < data.window.y) {
+                                up = true;
+                            } else if (data.mouse.x > data.window.x) {
+                                up = false;
+                            }
+                            this.state.createBullet(id, x, y, angle, right, up, team);
                         }
-                        if (data.mouse.y < data.window.y) {
-                            up = true;
-                        } else if (data.mouse.x > data.window.x) {
-                            up = false;
-                        }
-                        this.state.createBullet(id, x, y, angle, right, up, team);
                     }
                 }
                 break;
