@@ -14,10 +14,12 @@
   "license": "",
   "dependencies": {
     "@colyseus/monitor": "^0.11.0",
-    "colyseus": "^0.11.13",
-    "colyseus.js": "^0.11.1",
+    "@colyseus/social": "^0.11.4",
+    "colyseus": "^0.11.15",
+    "colyseus.js": "^0.11.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-jwt": "^5.3.1",
     "serve-index": "^1.9.1",
     "superagent": "^3.8.1"
   },

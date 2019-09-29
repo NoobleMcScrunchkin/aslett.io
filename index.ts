@@ -4,11 +4,13 @@ import serveIndex from 'serve-index';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'colyseus';
+import socialRoutes from "@colyseus/social/express"
 import { GameRoom } from "./rooms/GameRoom";
 
 const port = Number(process.env.PORT || 80) + Number(process.env.NODE_APP_INSTANCE || 0);
 const app = express();
 
+app.use("/", socialRoutes);
 app.use(cors());
 app.use(express.json());
 

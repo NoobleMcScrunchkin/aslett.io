@@ -131,25 +131,26 @@
         let host = window.document.location.host.replace(/:.*/, '');
 
         let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
+        client.auth.login();
         let room;
 
         startGame = function(name) {
             name = document.getElementById("nameInput").value;
             if (name == "Enter a name")
             name = "";
-            document.getElementById("nameArea").hidden = true;
-            document.getElementById("nameInput").hidden = true;
-            document.getElementById("colourButtonRed").hidden = true;
-            document.getElementById("colourButtonBlue").hidden = true;
-            document.getElementById("error").hidden = true;
-            document.getElementById("respawn").hidden = true;
             if (currentColour != "FF0000" || currentColour != "0000FF") {
                 currentColour == "FF0000";
             }
             running = 1;
             this.name = name;
-            document.getElementById("chatArea").hidden = false;
             client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
+                document.getElementById("chatArea").hidden = false;
+                document.getElementById("nameArea").hidden = true;
+                document.getElementById("nameInput").hidden = true;
+                document.getElementById("colourButtonRed").hidden = true;
+                document.getElementById("colourButtonBlue").hidden = true;
+                document.getElementById("error").hidden = true;
+                document.getElementById("respawn").hidden = true;
                 let room = room_instance
 
                 let players = {};
@@ -484,6 +485,8 @@
 
                 window.addEventListener('resize', _resize);
 
+            }).catch(err => {
+                console.log(err);
             });
         }
     </script>

@@ -1,6 +1,8 @@
 import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
+import { User, verifyToken } from "@colyseus/social";
 var rooms = new Array;
+var tokens = new Array;
 
 var map = [
 {x: -10, y: -10, w: 4010, h: 10, colour: "#000000"},
@@ -102,16 +104,19 @@ export class Player extends Schema {
 
     id = "";
 
+    userId = "";
+
     @type("number")
     timer = 0;
 
-    constructor(name, colour, state, id) {
-        super(name, colour, state, id);
+    constructor(name, colour, state, id, userId) {
+        super(name, colour, state, id, userId);
         if (colour == "FF0000") {
             this.team = "red";
         } else {
             this.team = "blue"
         }
+        this.userId = userId;
         this.id = id;
         this.state = state;
         this.name = name.substring(0, 16);
@@ -316,12 +321,12 @@ export class State extends Schema {
     players = new MapSchema<Player>();
     clients = new Array();
 
-    createPlayer (client: Client, name: string, colour: string, id: string) {
+    createPlayer (client: Client, name: string, colour: string, id: string, userId: string) {
         if(colour == "FF0000" || colour == "0000FF") {
-            this.players[client.sessionId] = new Player(name, colour, this, client.sessionId);
+            this.players[client.sessionId] = new Player(name, colour, this, client.sessionId, userId);
             this.clients[client.sessionId] = client;
         } else {
-            this.players[client.sessionId] = new Player(name, "FF0000", this, client.sessionId);
+            this.players[client.sessionId] = new Player(name, "FF0000", this, client.sessionId, userId);
             this.clients[client.sessionId] = client;
         }
     }
@@ -371,19 +376,36 @@ export class GameRoom extends Room<State> {
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
     }
 
-    onJoin (client: Client, options) {
-        this.state.createPlayer(client, options.name, options.colour, client.sessionId);
-        try {
-            console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-            if (this.state.players[client.sessionId].name == "") {
-                this.broadcast(("Player Joined."));
-            } else {
-                this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+    async onAuth(client, options) {
+        const token = verifyToken(options.token);
+
+        return await User.findById(token._id);
+    }
+
+    onJoin (client, options, user) {
+        let exists = false;
+        for (let i = 0; i < tokens.length; i++) {
+            if (user._id.toString() == tokens[i]) {
+                exists = true;
             }
-        } catch {
+        }
+        if (exists) {
             client.close();
-            this.state.removePlayer(client.sessionId);
-            console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+        } else {
+            tokens.push(user._id.toString());
+            this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
+            try {
+                console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+                if (this.state.players[client.sessionId].name == "") {
+                    this.broadcast(("Player Joined."));
+                } else {
+                    this.broadcast((this.state.players[client.sessionId].name + " Joined."));
+                }
+            } catch {
+                client.close();
+                this.state.removePlayer(client.sessionId);
+                console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+            }
         }
     }
 
@@ -394,6 +416,11 @@ export class GameRoom extends Room<State> {
                 this.broadcast(("Player Left."));
             } else {
                 this.broadcast((this.state.players[client.sessionId].name + " Left."));
+            }
+            for (let i = 0; i < tokens.length; i++) {
+                if (this.state.players[client.sessionId].userId == tokens[i]) {
+                    tokens.splice(i, 1);
+                }
             }
             this.state.removePlayer(client.sessionId);
         } catch {}
