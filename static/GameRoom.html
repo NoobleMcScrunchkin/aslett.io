@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- Flags made by smashicons -->
+
+<!-- <div class="flag" style="width: 100px; height: 100px; position: absolute; top: 5px; left: 5px;">
+        <img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(240deg); width: 100px; height: 100px;">
+    </div>
+ -->
 <html>
   <head>
     <meta name="viewport" content="width=device-width" />
@@ -12,7 +18,7 @@
             width: 100px;
             height: 100px;
             position: absolute;
-            z-index: -2;
+            z-index: -3;
             border-radius: 50%;
             border: 5px solid black;
             padding-top: 24px;
@@ -33,6 +39,12 @@
             width: 10px;
             height: 10px;
             border: 1px solid black;
+        }
+        .flag {
+            position: absolute;
+            z-index: 5;
+            width: 100px;
+            height: 100px;
         }
         #nameArea {
             display: flex;
@@ -156,6 +168,7 @@
                 let players = {};
                 let obstacles = {};
                 let bullets = {};
+                let flags = {};
 
                 let uniOffset = 50;
                 let border = 5;
@@ -181,6 +194,43 @@
                             dom: dom
                         };
                         document.body.appendChild(obstacles[id].dom);
+                    }
+                }
+
+                room.state.flags.onAdd = function (flag, id) {
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "flag";
+                        dom.style.top = flag.y + "px";
+                        dom.style.left = flag.y + "px";
+                        dom.style.width = "100px";
+                        dom.style.height = "100px";
+
+                        if (flag.team == "red") {
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(30deg); width: 100px; height: 100px;">';
+                        } else {
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(270deg); width: 100px; height: 100px;">';
+                        }
+
+                        flags[id] = {
+                            dom: dom,
+                            flag: flag
+                        };
+                        document.body.appendChild(flags[id].dom);
+                        room.state.flags.onChange();
+                    }
+                }
+
+                room.state.flags.onChange = function (flag, id) {
+                    if (running) {
+                        room.state.players.onChange();
+                    }
+                }
+
+                room.state.flags.onRemove = function (flag, id) {
+                    if (running) {
+                        document.body.removeChild(flags[id].dom);
+                        delete flags[id];
                     }
                 }
 
@@ -300,6 +350,9 @@
                         for (let bulletId in bullets) {
                             renderBullet(bulletId);
                         }
+                        for (let flagId in flags) {
+                            renderFlag(flagId);
+                        }
                     }
                 }
 
@@ -348,23 +401,49 @@
                 let renderObstacle = function(id) {
                     let dom = obstacles[id].dom;
                     let obstacle = obstacles[id].obstacle;
-                    let offset = {
-                        x: obstacle.x - cameraPosition.x,
-                        y: obstacle.y - cameraPosition.y
-                    };
-                    dom.style.left = (offset.x - uniOffset) + "px";
-                    dom.style.top = (offset.y - uniOffset) + "px";
+                    if (obstacle.x >= cameraPosition.x - obstacle.w && obstacle.x <= (cameraPosition.x + window.innerWidth) + obstacle.w && obstacle.y >= cameraPosition.y - obstacle.h && obstacle.y <= (cameraPosition.y + window.innerHeight) + obstacle.h) {
+                        let offset = {
+                            x: obstacle.x - cameraPosition.x,
+                            y: obstacle.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
                 }
 
                 let renderBullet = function(id) {
                     let dom = bullets[id].dom;
                     let bullet = bullets[id].bullet;
-                    let offset = {
-                        x: bullet.x - cameraPosition.x,
-                        y: bullet.y - cameraPosition.y
-                    };
-                    dom.style.left = (offset.x - uniOffset) + "px";
-                    dom.style.top = (offset.y - uniOffset) + "px";
+                    if (bullet.x >= cameraPosition.x - bullet.w && bullet.x <= (cameraPosition.x + window.innerWidth) + bullet.w && bullet.y >= cameraPosition.y - bullet.h && bullet.y <= (cameraPosition.y + window.innerHeight) + bullet.h) {
+                        let offset = {
+                            x: bullet.x - cameraPosition.x,
+                            y: bullet.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
+                }
+
+                let renderFlag = function(id) {
+                    let dom = flags[id].dom;
+                    let flag = flags[id].flag;
+                    if (flag.x >= cameraPosition.x - flag.w && flag.x <= (cameraPosition.x + window.innerWidth) + (flag.w / 2) && flag.y >= cameraPosition.y - flag.h && flag.y <= (cameraPosition.y + window.innerHeight) + flag.h) {
+                        let offset = {
+                            x: flag.x - cameraPosition.x,
+                            y: flag.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
                 }
 
                 let moveCamera = function() {
@@ -387,11 +466,6 @@
                             cameraPosition = {
                                 x: spectatePlayer.player.x - window.innerWidth / 2,
                                 y: spectatePlayer.player.y - window.innerHeight / 2
-                            };
-                        } else {
-                            cameraPosition = {
-                                x: window.innerWidth / 2,
-                                y: window.innerHeight / 2
                             };
                         }
                     }

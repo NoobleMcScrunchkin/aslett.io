@@ -5,25 +5,38 @@ var rooms = new Array;
 var tokens = new Array;
 
 var map = [
-{x: -10, y: -10, w: 4010, h: 10, colour: "#000000"},
-{x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"},
-{x: -10, y: -10, w: 10, h: 4010, colour: "#000000"},
-{x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"},
-{x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"},
-{x: 400, y: 400, w: 100, h: 100, colour: "#FF0000"},
-{x: 600, y: 200, w: 400, h: 100, colour: "#0000FF"}
+{type: "obstacle", x: -10, y: -10, w: 4010, h: 10, colour: "#000000"},
+{type: "obstacle", x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"},
+{type: "obstacle", x: -10, y: -10, w: 10, h: 4010, colour: "#000000"},
+{type: "obstacle", x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"},
+{type: "obstacle", x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"},
+{type: "obstacle", x: 400, y: 400, w: 100, h: 100, colour: "#FF0000"},
+{type: "obstacle", x: 600, y: 200, w: 400, h: 100, colour: "#0000FF"},
+{type: "rSpawn", x: 5, y: 5},
+{type: "bSpawn", x: 600, y: 5},
+{type: "flag", x: 5, y: 5, team: "red"},
+{type: "flag", x: 400, y: 5, team: "blue"}
 ];
+
+function sentenceCase (str) {
+    return str.replace(/[a-z]/i, function (letter) { return letter.toUpperCase();}).trim();
+}
 
 function collides (rect, circle, collide_inside)
 {
-    var half = { x: rect.w/2, y: rect.h/2 };
+    var half = {
+        x: rect.w / 2,
+        y: rect.h / 2
+    };
     var center = {
-        x: circle.x - (rect.x+half.x),
-        y: circle.y - (rect.y+half.y)};
-
+        x: circle.x - (rect.x + half.x),
+        y: circle.y - (rect.y + half.y)
+    };
     var side = {
         x: Math.abs (center.x) - half.x,
-        y: Math.abs (center.y) - half.y};
+        y: Math.abs (center.y) - half.y
+    };
+
     if (side.x >  circle.r || side.y >  circle.r)
         return false;
     if (side.x < -circle.r && side.y < -circle.r)
@@ -31,7 +44,7 @@ function collides (rect, circle, collide_inside)
     if (side.x < 0 || side.y < 0)
         return true;
 
-    return side.x*side.x + side.y*side.y  < circle.r*circle.r;
+    return side.x * side.x + side.y * side.y  < circle.r * circle.r;
 }
 
 var getTs = function () {
@@ -65,10 +78,16 @@ var getTs = function () {
 
 export class Player extends Schema {
     @type("number")
-    x = Math.floor(Math.random() * 100) + 5;
+    x = 0;
 
     @type("number")
-    y = Math.floor(Math.random() * 100) + 5;
+    y = 0;
+
+    @type("number")
+    originX = 0;
+
+    @type("number")
+    originY = 0;
 
     @type("number")
     w = 100;
@@ -81,6 +100,8 @@ export class Player extends Schema {
 
     @type("boolean")
     dead = false;
+
+    flag = undefined;
 
     velocity = {
         x: 0,
@@ -117,14 +138,20 @@ export class Player extends Schema {
 
     constructor(name, colour, state, id, userId) {
         super(name, colour, state, id, userId);
-        if (colour == "FF0000") {
-            this.team = "red";
-        } else {
-            this.team = "blue"
-        }
         this.userId = userId;
         this.id = id;
         this.state = state;
+        if (colour == "FF0000") {
+            this.team = "red";
+            this.x = this.state.spawn.r.x;
+            this.y = this.state.spawn.r.y;
+        } else {
+            this.team = "blue";
+            this.x = this.state.spawn.b.x;
+            this.y = this.state.spawn.b.y;
+        }
+        this.originX = this.x;
+        this.originY = this.y;
         this.name = name.substring(0, 16);
         this.colour = "#" + colour;
     }
@@ -213,6 +240,11 @@ export class Player extends Schema {
                 this.velocity.y = 0;
             }
 
+            if (this.flag != undefined) {
+                this.flag.x = this.x;
+                this.flag.y = this.y;
+            }
+
             for (let bulletId in this.state.bullets) {
                 let bullet = this.state.bullets[bulletId];
                 let center = {
@@ -223,7 +255,36 @@ export class Player extends Schema {
                 if (collides(bullet, center, true)) {
                     if (bullet.team != this.team) {
                         this.dead = true;
+                        this.x = this.originX;
+                        this.y = this.originY;
+                        try {
+                            this.flag.taken = false;
+                        } catch {}
+                        this.flag = undefined;
                         delete this.state.bullets[bulletId];
+                    }
+                }
+            }
+
+            for (let flagId in this.state.flags) {
+                let flag = this.state.flags[flagId];
+                let center = {
+                    x: this.x + this.radius,
+                    y: this.y + this.radius,
+                    r: this.radius
+                };
+                if (collides(flag, center, true)) {
+                    if (flag.team != this.team) {
+                        if (!flag.taken) {
+                            flag.taken = true;
+                            this.flag = flag;
+                        }
+                    } else if (this.flag != undefined) {
+                        this.flag.x = this.flag.originX;
+                        this.flag.y = this.flag.originY;
+                        this.flag.taken = false;
+                        this.flag = undefined;
+                        this.state.gameroom.broadcast(sentenceCase(this.team) + " got a point.")
                     }
                 }
             }
@@ -241,8 +302,6 @@ export class Player extends Schema {
             if (this.timer > 300) {
                 this.dead = false;
                 this.timer = 0;
-                this.x = Math.floor(Math.random() * 100) + 5;
-                this.y = Math.floor(Math.random() * 100) + 5;
                 this.velocity.x = 0;
                 this.velocity.y = 0;
                 this.acceleration.x = 0;
@@ -271,6 +330,48 @@ export class Obstacle extends Schema {
         this.w = w;
         this.h = h;
         this.colour = colour;
+    }
+}
+
+export class Flag extends Schema {
+    @type("number")
+    x = 0;
+    @type("number")
+    y = 0;
+    @type("number")
+    originX = 0;
+    @type("number")
+    originY = 0;
+    @type("number")
+    w = 100;
+    @type("number")
+    h = 100;
+    @type("string")
+    team = "red";
+    @type("boolean")
+    taken = false;
+    timer = 0;
+
+    constructor(x, y, team) {
+        super(x, y, team);
+        this.x = x;
+        this.y = y;
+        this.originX = x;
+        this.originY = y;
+        this.team = team;
+    }
+
+    move () {
+        if (this.x != this.originX && this.y != this.originY && !this.taken) {
+            this.timer += 1;
+            if (this.timer > 900) {
+                this.timer = 0;
+                this.x = this.originX;
+                this.y = this.originY;
+            }
+        } else {
+            this.timer = 0;
+        }
     }
 }
 
@@ -334,6 +435,13 @@ export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
     clients = new Array();
+    spawn = {r: {}, b: {}}
+    gameroom = undefined;
+
+    constructor(game) {
+        super(game);
+        this.gameroom = game;
+    }
 
     createPlayer (client: Client, name: string, colour: string, id: string, userId: string) {
         if(colour == "FF0000" || colour == "0000FF") {
@@ -361,6 +469,17 @@ export class State extends Schema {
         delete this.obstacles[ id ];
     }
 
+    @type({ map: Flag })
+    flags = new MapSchema<Obstacle>();
+
+    createFlag (id: number, x: number, y: number, team: string) {
+        this.flags[ id ] = new Flag(x, y, team);
+    }
+
+    removeFlag (id: string) {
+        delete this.flags[ id ];
+    }
+
     @type({ map: Bullet })
     bullets = new MapSchema<Bullet>();
 
@@ -381,10 +500,20 @@ export class GameRoom extends Room<State> {
         rooms[this.roomId] = this;
         console.log(getTs(), "\x1b[32mGameRoom \x1b[34mcreated!\x1b[37m");
 
-        this.setState(new State());
+        this.setState(new State(this));
 
         for (let i = 0; i < map.length; i++) {
+            if (map[i].type == "obstacle")
             this.state.createObstacle(i, map[i].x, map[i].y, map[i].w, map[i].h, map[i].colour);
+
+            if (map[i].type == "rSpawn")
+            this.state.spawn.r = {x: map[i].x, y: map[i].y};
+
+            if (map[i].type == "bSpawn")
+            this.state.spawn.b = {x: map[i].x, y: map[i].y};
+
+            if (map[i].type == "flag")
+            this.state.createFlag(i, map[i].x, map[i].y, map[i].team);
         }
 
         this.gameInterval = setInterval(this.gameLoop.bind(this), 1000 / 60);
@@ -559,6 +688,9 @@ export class GameRoom extends Room<State> {
         for (let id in this.state.bullets) {
             let bullet = this.state.bullets[id];
             bullet.move();
+        }
+        for (let id in this.state.flags) {
+            this.state.flags[id].move();
         }
     }
 }

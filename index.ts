@@ -24,6 +24,9 @@ gameServer.define("Game", GameRoom);
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/static/GameRoom.html'));
 });
+app.get('/res/flag.svg', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/flag.svg'));
+});
 app.get('/res/grid.png', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png'));
 });
