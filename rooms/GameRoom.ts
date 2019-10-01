@@ -530,30 +530,6 @@ export class GameRoom extends Room<State> {
         } else {
             tokens.push(user._id.toString());
         }
-        // let exists = false;
-        // for (let i = 0; i < tokens.length; i++) {
-        //     if (user._id.toString() == tokens[i]) {
-        //         exists = true;
-        //     }
-        // }
-        // if (exists) {
-        //     client.close();
-        // } else {
-        //     tokens.push(user._id.toString());
-        //     this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
-        //     try {
-        //         console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-        //         if (this.state.players[client.sessionId].name == "") {
-        //             this.broadcast({id: "message", message: ("Player Joined.")});
-        //         } else {
-        //             this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Joined.")});
-        //         }
-        //     } catch {
-        //         client.close();
-        //         this.state.removePlayer(client.sessionId);
-        //         console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
-        //     }
-        // }
     }
 
     onLeave (client) {
