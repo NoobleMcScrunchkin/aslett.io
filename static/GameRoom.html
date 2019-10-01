@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- Flags made by smashicons -->
+
 <html>
   <head>
     <meta name="viewport" content="width=device-width" />
@@ -12,7 +14,7 @@
             width: 100px;
             height: 100px;
             position: absolute;
-            z-index: -2;
+            z-index: 0;
             border-radius: 50%;
             border: 5px solid black;
             padding-top: 24px;
@@ -33,6 +35,12 @@
             width: 10px;
             height: 10px;
             border: 1px solid black;
+        }
+        .flag {
+            position: absolute;
+            z-index: 5;
+            width: 80px;
+            height: 80px;
         }
         #nameArea {
             display: flex;
@@ -92,6 +100,15 @@
             text-align: center;
             color: grey;
         }
+        #scores {
+            font-size: 2em;
+        }
+        #scoresR {
+            color: red;
+        }
+        #scoresB {
+            color: blue;
+        }
         body {
             overflow: hidden;
             background-position: 0px 0px;
@@ -107,6 +124,9 @@
     </script>
   </head>
   <body style="background-color: white;">
+      <b id="scores" hidden>
+          <span id="scoresR"></span>-<span id="scoresB"></span>
+      </b>
       <div id="nameArea">
           <b id="respawn"></b>
           <b id="error"></b>
@@ -128,11 +148,133 @@
         document.body.style.width = window.innerWidth;
         var tokens = undefined;
 
+<<<<<<< HEAD
         grecaptcha.ready(function() {
             grecaptcha.execute('6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv', {action:'homepage'}).then(function(token) {
                 running = 0;
 
                 let host = window.document.location.host.replace(/:.*/, '');
+=======
+        running = 0;
+
+        let host = window.document.location.host.replace(/:.*/, '');
+
+        let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
+        client.auth.login();
+        let room;
+
+        startGame = function(name) {
+            name = document.getElementById("nameInput").value;
+            if (name == "Enter a name")
+            name = "";
+            if (currentColour != "FF0000" || currentColour != "0000FF") {
+                currentColour == "FF0000";
+            }
+            running = 1;
+            this.name = name;
+            client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
+                document.getElementById("chatArea").hidden = false;
+                document.getElementById("scores").hidden = false;
+                document.getElementById("nameArea").hidden = true;
+                document.getElementById("nameInput").hidden = true;
+                document.getElementById("colourButtonRed").hidden = true;
+                document.getElementById("colourButtonBlue").hidden = true;
+                document.getElementById("error").hidden = true;
+                document.getElementById("respawn").hidden = true;
+                let room = room_instance
+
+                let players = {};
+                let obstacles = {};
+                let bullets = {};
+                let flags = {};
+
+                let uniOffset = 50;
+                let border = 5;
+
+                currentId = room.sessionId;
+
+                cameraPosition = {
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2
+                };
+
+                room.state.obstacles.onAdd = function (obstacle, id) {
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "obstacle";
+                        dom.style.top = obstacle.y + "px";
+                        dom.style.left = obstacle.y + "px";
+                        dom.style.width = obstacle.w - (border * 2) + "px";
+                        dom.style.height = obstacle.h - (border * 2) + "px";
+                        dom.style.background = obstacle.colour;
+                        obstacles[id] = {
+                            obstacle: obstacle,
+                            dom: dom
+                        };
+                        document.body.appendChild(obstacles[id].dom);
+                    }
+                }
+
+                room.state.flags.onAdd = function (flag, id) {
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "flag";
+                        dom.style.top = flag.y + "px";
+                        dom.style.left = flag.y + "px";
+                        dom.style.width = "80px";
+                        dom.style.height = "80px";
+
+                        if (flag.team == "red") {
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(30deg); width: 80px; height: 80px;">';
+                        } else {
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(270deg); width: 80px; height: 80px;">';
+                        }
+
+                        flags[id] = {
+                            dom: dom,
+                            flag: flag
+                        };
+                        document.body.appendChild(flags[id].dom);
+                        room.state.flags.onChange();
+                    }
+                }
+
+                room.state.flags.onChange = function (flag, id) {
+                    if (running) {
+                        room.state.players.onChange();
+                    }
+                }
+
+                room.state.flags.onRemove = function (flag, id) {
+                    if (running) {
+                        document.body.removeChild(flags[id].dom);
+                        delete flags[id];
+                    }
+                }
+
+                room.state.bullets.onAdd = function (bullet, id) {
+                    if (running) {
+                        let dom = document.createElement("div");
+                        dom.className = "bullet";
+                        dom.style.top = bullet.y + "px";
+                        dom.style.left = bullet.y + "px";
+                        dom.style.background = bullet.team;
+                        dom.style.width = (border * 2) + "px";
+                        dom.style.height = (border * 2) + "px";
+                        if (document.body.style.backgroundColor == "white") {
+                            dom.style.border = "1px solid black";
+                        } else {
+                            dom.style.border = "1px solid white";
+                        }
+                        bullets[id] = {
+                            dom: dom,
+                            bullet: bullet
+                        };
+                        document.body.appendChild(bullets[id].dom);
+                        room.state.bullets.onChange();
+                    }
+                }
+>>>>>>> ba763bd89d02bc10a5e96e229049cdfcaecd2ae6
 
                 let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
                 client.auth.login();
@@ -338,6 +480,16 @@
                                 }
                             }
                         }
+<<<<<<< HEAD
+=======
+                        for (let flagId in flags) {
+                            renderFlag(flagId);
+                        }
+                        document.getElementById("scoresR").textContent = room.state.scoresR;
+                        document.getElementById("scoresB").textContent = room.state.scoresB;
+                    }
+                }
+>>>>>>> ba763bd89d02bc10a5e96e229049cdfcaecd2ae6
 
                         let renderPlayer = function(sessionId) {
                             let dom = players[sessionId].dom;
@@ -380,6 +532,7 @@
                             dom.style.left = (offset.x - uniOffset) + "px";
                             dom.style.top = (offset.y - uniOffset) + "px";
                         }
+<<<<<<< HEAD
 
                         let renderBullet = function(id) {
                             let dom = bullets[id].dom;
@@ -390,6 +543,80 @@
                             };
                             dom.style.left = (offset.x - uniOffset) + "px";
                             dom.style.top = (offset.y - uniOffset) + "px";
+=======
+                    }
+                }
+
+                let renderObstacle = function(id) {
+                    let dom = obstacles[id].dom;
+                    let obstacle = obstacles[id].obstacle;
+                    if (obstacle.x >= cameraPosition.x - obstacle.w && obstacle.x <= (cameraPosition.x + window.innerWidth) + obstacle.w && obstacle.y >= cameraPosition.y - obstacle.h && obstacle.y <= (cameraPosition.y + window.innerHeight) + obstacle.h) {
+                        let offset = {
+                            x: obstacle.x - cameraPosition.x,
+                            y: obstacle.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
+                }
+
+                let renderBullet = function(id) {
+                    let dom = bullets[id].dom;
+                    let bullet = bullets[id].bullet;
+                    if (bullet.x >= cameraPosition.x - bullet.w && bullet.x <= (cameraPosition.x + window.innerWidth) + bullet.w && bullet.y >= cameraPosition.y - bullet.h && bullet.y <= (cameraPosition.y + window.innerHeight) + bullet.h) {
+                        let offset = {
+                            x: bullet.x - cameraPosition.x,
+                            y: bullet.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
+                }
+
+                let renderFlag = function(id) {
+                    let dom = flags[id].dom;
+                    let flag = flags[id].flag;
+                    if (flag.x >= cameraPosition.x - flag.w && flag.x <= (cameraPosition.x + window.innerWidth) + (flag.w / 2) && flag.y >= cameraPosition.y - flag.h && flag.y <= (cameraPosition.y + window.innerHeight) + flag.h) {
+                        let offset = {
+                            x: flag.x - cameraPosition.x,
+                            y: flag.y - cameraPosition.y
+                        };
+                        dom.style.left = (offset.x - uniOffset) + "px";
+                        dom.style.top = (offset.y - uniOffset) + "px";
+                        dom.hidden = false;
+                    } else {
+                        dom.hidden = true;
+                    }
+                }
+
+                let moveCamera = function() {
+                    if (!players[currentId].player.dead) {
+                        cameraPosition = {
+                            x: players[currentId].player.x - window.innerWidth / 2,
+                            y: players[currentId].player.y - window.innerHeight / 2
+                        };
+                    } else {
+                        let spectatePlayer = undefined;
+                        for (let playerId in players) {
+                            if (playerId != currentId) {
+                                if (players[playerId].player.team == players[currentId].player.team) {
+                                    spectatePlayer = players[playerId];
+                                    break;
+                                }
+                            }
+                        }
+                        if (spectatePlayer != undefined) {
+                            cameraPosition = {
+                                x: spectatePlayer.player.x - window.innerWidth / 2,
+                                y: spectatePlayer.player.y - window.innerHeight / 2
+                            };
+>>>>>>> ba763bd89d02bc10a5e96e229049cdfcaecd2ae6
                         }
 
                         let moveCamera = function() {
