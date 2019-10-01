@@ -570,7 +570,6 @@ export class GameRoom extends Room<State> {
                     response = body;
                     if (response.success) {
                         this.state.createPlayer(client, options.name, options.colour, client.sessionId, client.auth._id);
-                        this.send(client, {id: "verify", message: true, player: this.state.players[client.sessionId]});
                         try {
                             console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
                             if (this.state.players[client.sessionId].name == "") {
@@ -582,6 +581,14 @@ export class GameRoom extends Room<State> {
                             client.close();
                             this.state.removePlayer(client.sessionId);
                             console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+                        }
+                    } else {
+                        this.send(client, {id: "verify", message: false});
+                        client.close();
+                        for (let i = 0; i < tokens.length; i++) {
+                            if (client.auth._id == tokens[i]) {
+                                tokens.splice(i, 1);
+                            }
                         }
                     }
                 });
