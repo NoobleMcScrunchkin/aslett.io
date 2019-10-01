@@ -87,6 +87,7 @@ export class Player extends Schema {
     h = 100;
     @type("string")
     team = "red";
+    @type("boolean")
     dead = false;
     flag = undefined;
     velocity = {
@@ -105,6 +106,7 @@ export class Player extends Schema {
     radius = 50;
     id = "";
     userId = "";
+    @type("number")
     timer = 0;
     bTimer = 0;
     shot = false;
