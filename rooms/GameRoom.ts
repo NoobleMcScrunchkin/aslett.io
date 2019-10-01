@@ -5,22 +5,20 @@ var rooms = new Array;
 var tokens = new Array;
 
 var map = [
-{type: "obstacle", x: -10, y: -10, w: 4010, h: 10, colour: "#000000"},
-{type: "obstacle", x: 4000, y: -10, w: 10, h: 4020, colour: "#000000"},
-{type: "obstacle", x: -10, y: -10, w: 10, h: 4010, colour: "#000000"},
-{type: "obstacle", x: -10, y: 4000, w: 4010, h: 10, colour: "#000000"},
-{type: "obstacle", x: 200, y: 200, w: 100, h: 100, colour: "#FF0000"},
-{type: "obstacle", x: 400, y: 400, w: 100, h: 100, colour: "#FF0000"},
-{type: "obstacle", x: 600, y: 200, w: 400, h: 100, colour: "#0000FF"},
+{type: "obstacle", x: -10, y: -10, w: 4010, h: 10, colour: "#000000", solid: true},
+{type: "obstacle", x: 4000, y: -10, w: 10, h: 4020, colour: "#000000", solid: true},
+{type: "obstacle", x: -10, y: -10, w: 10, h: 4010, colour: "#000000", solid: true},
+{type: "obstacle", x: -10, y: 4000, w: 4010, h: 10, colour: "#000000", solid: true},
+{type: "obstacle", x: 200, y: 200, w: 100, h: 100, colour: "#FF0000", solid: true},
+{type: "obstacle", x: 400, y: 400, w: 100, h: 100, colour: "#FF0000", solid: true},
+{type: "obstacle", x: 600, y: 200, w: 400, h: 100, colour: "#0000FF", solid: true},
 {type: "rSpawn", x: 5, y: 5},
 {type: "bSpawn", x: 600, y: 5},
-{type: "flag", x: 5, y: 5, team: "red"},
-{type: "flag", x: 400, y: 5, team: "blue"}
+{type: "flag", x: 15, y: 15, team: "red"},
+{type: "flag", x: 410, y: 15, team: "blue"},
+{type: "obstacle", x: 5, y: 5, w: 100, h: 100, colour: "#e1e1e1", solid: false},
+{type: "obstacle", x: 400, y: 5, w: 100, h: 100, colour: "#e1e1e1", solid: false},
 ];
-
-function sentenceCase (str) {
-    return str.replace(/[a-z]/i, function (letter) { return letter.toUpperCase();}).trim();
-}
 
 function collides (rect, circle, collide_inside)
 {
@@ -49,7 +47,6 @@ function collides (rect, circle, collide_inside)
 
 var getTs = function () {
     let tsObj = new Date();
-
     let hours = tsObj.getHours();
     let minutes = tsObj.getMinutes();
     let seconds = tsObj.getSeconds();
@@ -79,61 +76,36 @@ var getTs = function () {
 export class Player extends Schema {
     @type("number")
     x = 0;
-
     @type("number")
     y = 0;
-
-    @type("number")
     originX = 0;
-
-    @type("number")
     originY = 0;
-
     @type("number")
     w = 100;
-
     @type("number")
     h = 100;
-
     @type("string")
     team = "red";
-
-    @type("boolean")
     dead = false;
-
     flag = undefined;
-
     velocity = {
         x: 0,
         y: 0
     };
-
     acceleration = {
         x: 0,
         y: 0
     };
-
     @type("string")
     colour = "#FFFFFF"
-
     @type("string")
     name = "Player";
-
     state = undefined;
-
     radius = 50;
-
     id = "";
-
     userId = "";
-
-    @type("number")
     timer = 0;
-
-    @type("number")
     bTimer = 0;
-
-    @type("boolean")
     shot = false;
 
     constructor(name, colour, state, id, userId) {
@@ -168,6 +140,7 @@ export class Player extends Schema {
                     y: this.y + this.radius,
                     r: this.radius
                 };
+                if (obstacle.solid)
                 if (collides(obstacle, center, true)) {
                     if (this.x < obstacle.x + obstacle.w && this.x + this.w > obstacle.x && this.y < obstacle.y + obstacle.h - center.r && this.y + this.h > obstacle.y + center.r) {
                         if (this.velocity.x < 0) {
@@ -206,6 +179,7 @@ export class Player extends Schema {
                     y: this.y + this.radius,
                     r: this.radius
                 };
+                if (obstacle.solid)
                 if (collides(obstacle, center, true)) {
                     if (this.x < obstacle.x + obstacle.w - center.r && this.x + this.w > obstacle.x + center.r && this.y < obstacle.y + obstacle.h && this.y + this.h > obstacle.y) {
                         if (this.velocity.y < 0) {
@@ -241,8 +215,8 @@ export class Player extends Schema {
             }
 
             if (this.flag != undefined) {
-                this.flag.x = this.x;
-                this.flag.y = this.y;
+                this.flag.x = this.x + 10;
+                this.flag.y = this.y - 70;
             }
 
             for (let bulletId in this.state.bullets) {
@@ -279,12 +253,19 @@ export class Player extends Schema {
                             flag.taken = true;
                             this.flag = flag;
                         }
-                    } else if (this.flag != undefined) {
+                    }
+                }
+                if (collides({x: flag.originX, y: flag.originY, w: flag.w, h: flag.h}, center, true)) {
+                    if (this.flag != undefined && flag.team == this.team) {
                         this.flag.x = this.flag.originX;
                         this.flag.y = this.flag.originY;
                         this.flag.taken = false;
                         this.flag = undefined;
-                        this.state.gameroom.broadcast(sentenceCase(this.team) + " got a point.")
+                        if (this.team == "red") {
+                            this.state.scoresR += 1;
+                        } else {
+                            this.state.scoresB += 1;
+                        }
                     }
                 }
             }
@@ -322,14 +303,17 @@ export class Obstacle extends Schema {
     h = 0;
     @type("string")
     colour = "F000000";
+    @type("boolean")
+    solid = false;
 
-    constructor(x, y, w, h, colour) {
-        super(x, y, w, h, colour);
+    constructor(x, y, w, h, colour, solid) {
+        super(x, y, w, h, colour, solid);
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
         this.colour = colour;
+        this.solid = solid;
     }
 }
 
@@ -343,9 +327,9 @@ export class Flag extends Schema {
     @type("number")
     originY = 0;
     @type("number")
-    w = 100;
+    w = 80;
     @type("number")
-    h = 100;
+    h = 80;
     @type("string")
     team = "red";
     @type("boolean")
@@ -363,6 +347,9 @@ export class Flag extends Schema {
 
     move () {
         if (this.x != this.originX && this.y != this.originY && !this.taken) {
+            if (this.timer == 0)
+            this.y += 70;
+
             this.timer += 1;
             if (this.timer > 900) {
                 this.timer = 0;
@@ -424,6 +411,7 @@ export class Bullet extends Schema {
         }
         for (let obstacleId in this.state.obstacles) {
             let obstacle = this.state.obstacles[obstacleId];
+            if (obstacle.solid)
             if (obstacle.x < this.x + this.w && obstacle.x + obstacle.w > this.x && obstacle.y < this.y + this.h && obstacle.y + obstacle.h > this.y) {
                 delete this.state.bullets[this.id];
             }
@@ -435,7 +423,11 @@ export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
     clients = new Array();
-    spawn = {r: {}, b: {}}
+    spawn = {r: {}, b: {}};
+    @type("number")
+    scoresR = 0;
+    @type("number")
+    scoresB = 0;
     gameroom = undefined;
 
     constructor(game) {
@@ -461,8 +453,8 @@ export class State extends Schema {
     @type({ map: Obstacle })
     obstacles = new MapSchema<Obstacle>();
 
-    createObstacle (id: number, x: number, y: number, w: number, h: number, colour: string) {
-        this.obstacles[ id ] = new Obstacle(x, y, w, h, colour);
+    createObstacle (id: number, x: number, y: number, w: number, h: number, colour: string, solid: boolean) {
+        this.obstacles[ id ] = new Obstacle(x, y, w, h, colour, solid);
     }
 
     removeObstacle (id: string) {
@@ -504,7 +496,7 @@ export class GameRoom extends Room<State> {
 
         for (let i = 0; i < map.length; i++) {
             if (map[i].type == "obstacle")
-            this.state.createObstacle(i, map[i].x, map[i].y, map[i].w, map[i].h, map[i].colour);
+            this.state.createObstacle(i, map[i].x, map[i].y, map[i].w, map[i].h, map[i].colour, map[i].solid);
 
             if (map[i].type == "rSpawn")
             this.state.spawn.r = {x: map[i].x, y: map[i].y};
@@ -564,6 +556,10 @@ export class GameRoom extends Room<State> {
                 if (this.state.players[client.sessionId].userId == tokens[i]) {
                     tokens.splice(i, 1);
                 }
+            }
+            if (this.state.players[client.sessionId].flag != undefined) {
+                this.state.players[client.sessionId].flag.taken = false;
+                this.state.players[client.sessionId].flag = undefined;
             }
             this.state.removePlayer(client.sessionId);
         } catch {}

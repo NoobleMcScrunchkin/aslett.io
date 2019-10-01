@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <!-- Flags made by smashicons -->
 
-<!-- <div class="flag" style="width: 100px; height: 100px; position: absolute; top: 5px; left: 5px;">
-        <img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(240deg); width: 100px; height: 100px;">
-    </div>
- -->
 <html>
   <head>
     <meta name="viewport" content="width=device-width" />
@@ -18,7 +14,7 @@
             width: 100px;
             height: 100px;
             position: absolute;
-            z-index: -3;
+            z-index: 0;
             border-radius: 50%;
             border: 5px solid black;
             padding-top: 24px;
@@ -43,8 +39,8 @@
         .flag {
             position: absolute;
             z-index: 5;
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
         }
         #nameArea {
             display: flex;
@@ -104,6 +100,15 @@
             text-align: center;
             color: grey;
         }
+        #scores {
+            font-size: 2em;
+        }
+        #scoresR {
+            color: red;
+        }
+        #scoresB {
+            color: blue;
+        }
         body {
             overflow: hidden;
             background-position: 0px 0px;
@@ -118,6 +123,9 @@
     </script>
   </head>
   <body style="background-color: white;">
+      <b id="scores" hidden>
+          <span id="scoresR"></span>-<span id="scoresB"></span>
+      </b>
       <div id="nameArea">
           <b id="respawn"></b>
           <b id="error"></b>
@@ -157,6 +165,7 @@
             this.name = name;
             client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
                 document.getElementById("chatArea").hidden = false;
+                document.getElementById("scores").hidden = false;
                 document.getElementById("nameArea").hidden = true;
                 document.getElementById("nameInput").hidden = true;
                 document.getElementById("colourButtonRed").hidden = true;
@@ -203,13 +212,13 @@
                         dom.className = "flag";
                         dom.style.top = flag.y + "px";
                         dom.style.left = flag.y + "px";
-                        dom.style.width = "100px";
-                        dom.style.height = "100px";
+                        dom.style.width = "80px";
+                        dom.style.height = "80px";
 
                         if (flag.team == "red") {
-                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(30deg); width: 100px; height: 100px;">';
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(30deg); width: 80px; height: 80px;">';
                         } else {
-                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(270deg); width: 100px; height: 100px;">';
+                            dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(270deg); width: 80px; height: 80px;">';
                         }
 
                         flags[id] = {
@@ -353,6 +362,8 @@
                         for (let flagId in flags) {
                             renderFlag(flagId);
                         }
+                        document.getElementById("scoresR").textContent = room.state.scoresR;
+                        document.getElementById("scoresB").textContent = room.state.scoresB;
                     }
                 }
 
