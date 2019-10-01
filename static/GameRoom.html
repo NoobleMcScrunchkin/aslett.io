@@ -101,6 +101,7 @@
     </style>
     <script src="res/jquery.js"></script>
     <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv"></script>
     <script>
         var currentColour = "";
     </script>
@@ -125,370 +126,398 @@
     <script>
         document.body.style.height = window.innerHeight;
         document.body.style.width = window.innerWidth;
+        var tokens = undefined;
 
-        running = 0;
+        grecaptcha.ready(function() {
+            grecaptcha.execute('6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv', {action:'homepage'}).then(function(token) {
+                running = 0;
 
-        let host = window.document.location.host.replace(/:.*/, '');
+                let host = window.document.location.host.replace(/:.*/, '');
 
-        let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
-        client.auth.login();
-        let room;
+                let client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
+                client.auth.login();
+                let room;
 
-        startGame = function(name) {
-            name = document.getElementById("nameInput").value;
-            if (name == "Enter a name")
-            name = "";
-            if (currentColour != "FF0000" || currentColour != "0000FF") {
-                currentColour == "FF0000";
-            }
-            running = 1;
-            this.name = name;
-            client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
-                document.getElementById("chatArea").hidden = false;
-                document.getElementById("nameArea").hidden = true;
-                document.getElementById("nameInput").hidden = true;
-                document.getElementById("colourButtonRed").hidden = true;
-                document.getElementById("colourButtonBlue").hidden = true;
-                document.getElementById("error").hidden = true;
-                document.getElementById("respawn").hidden = true;
-                let room = room_instance
-
-                let players = {};
-                let obstacles = {};
-                let bullets = {};
-
-                let uniOffset = 50;
-                let border = 5;
-
-                currentId = room.sessionId;
-
-                cameraPosition = {
-                    x: window.innerWidth / 2,
-                    y: window.innerHeight / 2
-                };
-
-                room.state.obstacles.onAdd = function (obstacle, id) {
-                    if (running) {
-                        let dom = document.createElement("div");
-                        dom.className = "obstacle";
-                        dom.style.top = obstacle.y + "px";
-                        dom.style.left = obstacle.y + "px";
-                        dom.style.width = obstacle.w - (border * 2) + "px";
-                        dom.style.height = obstacle.h - (border * 2) + "px";
-                        dom.style.background = obstacle.colour;
-                        obstacles[id] = {
-                            obstacle: obstacle,
-                            dom: dom
-                        };
-                        document.body.appendChild(obstacles[id].dom);
+                startGame = function(name) {
+                    name = document.getElementById("nameInput").value;
+                    if (name == "Enter a name")
+                    name = "";
+                    if (currentColour != "FF0000" || currentColour != "0000FF") {
+                        currentColour == "FF0000";
                     }
-                }
+                    running = 1;
+                    this.name = name;
+                    client.joinOrCreate("Game", {name: this.name, colour: currentColour}).then(room_instance => {
+                        document.getElementById("chatArea").hidden = false;
+                        document.getElementById("nameArea").hidden = true;
+                        document.getElementById("nameInput").hidden = true;
+                        document.getElementById("colourButtonRed").hidden = true;
+                        document.getElementById("colourButtonBlue").hidden = true;
+                        document.getElementById("error").hidden = true;
+                        document.getElementById("respawn").hidden = true;
+                        let room = room_instance
+                        room.send({id: "verify", data: token, options: {name: this.name, colour: currentColour}});
+                        let players = {};
+                        let obstacles = {};
+                        let bullets = {};
 
-                room.state.bullets.onAdd = function (bullet, id) {
-                    if (running) {
-                        let dom = document.createElement("div");
-                        dom.className = "bullet";
-                        dom.style.top = bullet.y + "px";
-                        dom.style.left = bullet.y + "px";
-                        dom.style.background = bullet.team;
-                        dom.style.width = (border * 2) + "px";
-                        dom.style.height = (border * 2) + "px";
-                        if (document.body.style.backgroundColor == "white") {
-                            dom.style.border = "1px solid black";
-                        } else {
-                            dom.style.border = "1px solid white";
-                        }
-                        bullets[id] = {
-                            dom: dom,
-                            bullet: bullet
-                        };
-                        document.body.appendChild(bullets[id].dom);
-                        room.state.bullets.onChange();
-                    }
-                }
+                        let uniOffset = 50;
+                        let border = 5;
 
-                room.state.bullets.onChange = function (bullet, id) {
-                    if (running) {
-                        room.state.players.onChange();
-                    }
-                }
+                        currentId = room.sessionId;
 
-                room.state.bullets.onRemove = function (bullet, id) {
-                    if (running) {
-                        document.body.removeChild(bullets[id].dom);
-                        delete bullets[id];
-                    }
-                }
-
-                room.state.players.onAdd = function (player, sessionId) {
-                    if (running) {
-                        let dom = document.createElement("div");
-                        dom.className = "player";
-                        domb = document.createElement("b");
-                        domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
-                        domb.textContent = player.name;
-                        dom.style.background = player.colour;
-                        if (document.body.style.backgroundColor == "white") {
-                            dom.style.border = "5px solid black";
-                        } else {
-                            dom.style.border = "5px solid white";
-                        }
-
-                        players[sessionId] = {
-                            player: player,
-                            dom: dom
+                        cameraPosition = {
+                            x: window.innerWidth / 2,
+                            y: window.innerHeight / 2
                         };
 
-                        document.body.appendChild(players[sessionId].dom);
-                        players[sessionId].dom.appendChild(domb);
+                        room.onMessage((message) => {
+                            if (running && message.id == "message") {
+                                messagep = document.createElement("p");
+                                messagep.className = "chat";
+                                messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
+                                messagep.textContent = message.message;
+                                $(messagep).insertAfter("#chatInput");
+                                room.state.players.onChange();
+                            } else if (running && message.id == "verify" && message.message == true){
+                                let player = message.player;
+                                let dom = document.createElement("div");
+                                dom.className = "player";
+                                domb = document.createElement("b");
+                                domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
+                                domb.textContent = player.name;
+                                dom.style.background = player.colour;
+                                if (document.body.style.backgroundColor == "white") {
+                                    dom.style.border = "5px solid black";
+                                } else {
+                                    dom.style.border = "5px solid white";
+                                }
 
-                        for (let playerSessionId in players) {
-                            renderPlayer(playerSessionId);
-                        }
-                    }
-                }
+                                players[currentId] = {
+                                    player: player,
+                                    dom: dom
+                                };
 
-                room.state.players.onRemove = function (player, sessionId) {
-                    if (sessionId == currentId) {
-                        room.leave();
-                        running = false;
-                        for (let id in players) {
-                            document.body.removeChild(players[id].dom);
-                        }
-                        for (let id in obstacles) {
-                            document.body.removeChild(obstacles[id].dom);
-                        }
-                        for (let id in bullets) {
-                            document.body.removeChild(bullets[id].dom);
-                        }
-                        $('.chat').remove();
-                        players = undefined;
-                        obstacles = undefined;
-                        bullets = undefined;
-                        room = undefined;
-                        client = undefined;
-                        currentId = "";
-                        window.removeEventListener("keyup", _keyup);
-                        window.removeEventListener("keydown", _keydown);
-                        window.removeEventListener("mousedown", _mousedown);
-                        window.removeEventListener("resize", _resize);
-                        document.getElementById("nameInput").value = "Enter a name";
-                        document.getElementById("chatArea").hidden = true;
-                        document.getElementById("nameArea").hidden = false;
-                        document.getElementById("nameInput").hidden = false;
-                        document.getElementById("error").hidden = false;
-                        document.getElementById("colourButtonRed").hidden = false;
-                        document.getElementById("colourButtonBlue").hidden = false;
-                        document.getElementById("error").textContent = "You were Kicked";
-                    } else {
-                        if (running) {
-                            document.body.removeChild(players[sessionId].dom);
-                            delete players[sessionId];
-                        }
-                    }
-                }
+                                document.body.appendChild(players[currentId].dom);
+                                players[currentId].dom.appendChild(domb);
 
-                room.state.players.onChange = function (player, sessionId) {
-                    if (running) {
-                        moveCamera();
-                        for (let playerSessionId in players) {
-                            renderPlayer(playerSessionId);
-                        }
-                        for (let obstacleId in obstacles) {
-                            renderObstacle(obstacleId);
-                        }
-                        for (let bulletId in bullets) {
-                            renderBullet(bulletId);
-                        }
-                    }
-                }
+                                room.state.players.onChange();
+                            }
+                        });
 
-                room.onMessage((message) => {
-                    if (running) {
-                        messagep = document.createElement("p");
-                        messagep.className = "chat";
-                        messagep.style = "line-height: 10px; position: relative; font-size: 16px; line-height: 16px; box-sizing:border-box; display: relative; width: 100%; padding: 5px; margin: 0px; text-align: left; overflow: hidden; word-wrap: break-word; margin-top: 0;"
-                        messagep.textContent = message;
-                        $(messagep).insertAfter("#chatInput");
-                        room.state.players.onChange();
-                    }
-                });
-
-                let renderPlayer = function(sessionId) {
-                    let dom = players[sessionId].dom;
-                    let player = players[sessionId].player;
-                    if (!players[sessionId].player.dead) {
-                        if (sessionId == currentId) {
-                            document.getElementById("respawn").hidden = true;
-                            document.getElementById("respawn").textContent = "";
+                        room.state.obstacles.onAdd = function (obstacle, id) {
+                            if (running) {
+                                let dom = document.createElement("div");
+                                dom.className = "obstacle";
+                                dom.style.top = obstacle.y + "px";
+                                dom.style.left = obstacle.y + "px";
+                                dom.style.width = obstacle.w - (border * 2) + "px";
+                                dom.style.height = obstacle.h - (border * 2) + "px";
+                                dom.style.background = obstacle.colour;
+                                obstacles[id] = {
+                                    obstacle: obstacle,
+                                    dom: dom
+                                };
+                                document.body.appendChild(obstacles[id].dom);
+                            }
                         }
-                        if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
+
+                        room.state.bullets.onAdd = function (bullet, id) {
+                            if (running && id != currentId) {
+                                let dom = document.createElement("div");
+                                dom.className = "bullet";
+                                dom.style.top = bullet.y + "px";
+                                dom.style.left = bullet.y + "px";
+                                dom.style.background = bullet.team;
+                                dom.style.width = (border * 2) + "px";
+                                dom.style.height = (border * 2) + "px";
+                                if (document.body.style.backgroundColor == "white") {
+                                    dom.style.border = "1px solid black";
+                                } else {
+                                    dom.style.border = "1px solid white";
+                                }
+                                bullets[id] = {
+                                    dom: dom,
+                                    bullet: bullet
+                                };
+                                document.body.appendChild(bullets[id].dom);
+                                room.state.bullets.onChange();
+                            }
+                        }
+
+                        room.state.bullets.onChange = function (bullet, id) {
+                            if (running) {
+                                room.state.players.onChange();
+                            }
+                        }
+
+                        room.state.bullets.onRemove = function (bullet, id) {
+                            if (running) {
+                                document.body.removeChild(bullets[id].dom);
+                                delete bullets[id];
+                            }
+                        }
+
+                        room.state.players.onAdd = function (player, sessionId) {
+                            if (running) {
+                                let dom = document.createElement("div");
+                                dom.className = "player";
+                                domb = document.createElement("b");
+                                domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
+                                domb.textContent = player.name;
+                                dom.style.background = player.colour;
+                                if (document.body.style.backgroundColor == "white") {
+                                    dom.style.border = "5px solid black";
+                                } else {
+                                    dom.style.border = "5px solid white";
+                                }
+
+                                players[sessionId] = {
+                                    player: player,
+                                    dom: dom
+                                };
+
+                                document.body.appendChild(players[sessionId].dom);
+                                players[sessionId].dom.appendChild(domb);
+
+                                room.state.players.onChange();
+                            }
+                        }
+
+                        room.state.players.onRemove = function (player, sessionId) {
+                            if (sessionId == currentId) {
+                                room.leave();
+                                running = false;
+                                for (let id in players) {
+                                    document.body.removeChild(players[id].dom);
+                                }
+                                for (let id in obstacles) {
+                                    document.body.removeChild(obstacles[id].dom);
+                                }
+                                for (let id in bullets) {
+                                    document.body.removeChild(bullets[id].dom);
+                                }
+                                $('.chat').remove();
+                                players = undefined;
+                                obstacles = undefined;
+                                bullets = undefined;
+                                room = undefined;
+                                client = undefined;
+                                currentId = "";
+                                window.removeEventListener("keyup", _keyup);
+                                window.removeEventListener("keydown", _keydown);
+                                window.removeEventListener("mousedown", _mousedown);
+                                window.removeEventListener("resize", _resize);
+                                document.getElementById("nameInput").value = "Enter a name";
+                                document.getElementById("chatArea").hidden = true;
+                                document.getElementById("nameArea").hidden = false;
+                                document.getElementById("nameInput").hidden = false;
+                                document.getElementById("error").hidden = false;
+                                document.getElementById("colourButtonRed").hidden = false;
+                                document.getElementById("colourButtonBlue").hidden = false;
+                                document.getElementById("error").textContent = "You were Kicked";
+                            } else {
+                                if (running) {
+                                    document.body.removeChild(players[sessionId].dom);
+                                    delete players[sessionId];
+                                }
+                            }
+                        }
+
+                        room.state.players.onChange = function (player, sessionId) {
+                            if (running) {
+                                moveCamera();
+                                for (let playerSessionId in players) {
+                                    renderPlayer(playerSessionId);
+                                }
+                                for (let obstacleId in obstacles) {
+                                    renderObstacle(obstacleId);
+                                }
+                                for (let bulletId in bullets) {
+                                    renderBullet(bulletId);
+                                }
+                            }
+                        }
+
+                        let renderPlayer = function(sessionId) {
+                            let dom = players[sessionId].dom;
+                            let player = players[sessionId].player;
+                            if (!players[sessionId].player.dead) {
+                                if (sessionId == currentId) {
+                                    document.getElementById("respawn").hidden = true;
+                                    document.getElementById("respawn").textContent = "";
+                                }
+                                if(player.x >= cameraPosition.x - uniOffset && player.x <= (cameraPosition.x + window.innerWidth) + uniOffset && player.y >= cameraPosition.y - uniOffset && player.y <= (cameraPosition.y + window.innerHeight) + uniOffset) {
+                                    let offset = {
+                                        x: player.x - cameraPosition.x,
+                                        y: player.y - cameraPosition.y
+                                    };
+                                    dom.hidden = false;
+                                    dom.style.left = (offset.x - uniOffset) + "px";
+                                    dom.style.top = (offset.y - uniOffset) + "px";
+                                } else {
+                                    dom.hidden = true;
+                                }
+                            } else {
+                                dom.hidden = true;
+                                if (sessionId == currentId) {
+                                    document.getElementById("respawn").hidden = false;
+                                    let timer = (5 - (player.timer / 60)).toString().substring(0,3);
+                                    if (timer.length == 1)
+                                    timer += ".0";
+                                    document.getElementById("respawn").textContent = "Respawning in " + timer + "s";
+                                }
+                            }
+                        }
+
+                        let renderObstacle = function(id) {
+                            let dom = obstacles[id].dom;
+                            let obstacle = obstacles[id].obstacle;
                             let offset = {
-                                x: player.x - cameraPosition.x,
-                                y: player.y - cameraPosition.y
+                                x: obstacle.x - cameraPosition.x,
+                                y: obstacle.y - cameraPosition.y
                             };
-                            dom.hidden = false;
                             dom.style.left = (offset.x - uniOffset) + "px";
                             dom.style.top = (offset.y - uniOffset) + "px";
-                        } else {
-                            dom.hidden = true;
                         }
-                    } else {
-                        dom.hidden = true;
-                        if (sessionId == currentId) {
-                            document.getElementById("respawn").hidden = false;
-                            let timer = (5 - (player.timer / 60)).toString().substring(0,3);
-                            if (timer.length == 1)
-                            timer += ".0";
-                            document.getElementById("respawn").textContent = "Respawning in " + timer + "s";
-                        }
-                    }
-                }
 
-                let renderObstacle = function(id) {
-                    let dom = obstacles[id].dom;
-                    let obstacle = obstacles[id].obstacle;
-                    let offset = {
-                        x: obstacle.x - cameraPosition.x,
-                        y: obstacle.y - cameraPosition.y
-                    };
-                    dom.style.left = (offset.x - uniOffset) + "px";
-                    dom.style.top = (offset.y - uniOffset) + "px";
-                }
-
-                let renderBullet = function(id) {
-                    let dom = bullets[id].dom;
-                    let bullet = bullets[id].bullet;
-                    let offset = {
-                        x: bullet.x - cameraPosition.x,
-                        y: bullet.y - cameraPosition.y
-                    };
-                    dom.style.left = (offset.x - uniOffset) + "px";
-                    dom.style.top = (offset.y - uniOffset) + "px";
-                }
-
-                let moveCamera = function() {
-                    if (!players[currentId].player.dead) {
-                        cameraPosition = {
-                            x: players[currentId].player.x - window.innerWidth / 2,
-                            y: players[currentId].player.y - window.innerHeight / 2
-                        };
-                    } else {
-                        let spectatePlayer = undefined;
-                        for (let playerId in players) {
-                            if (playerId != currentId) {
-                                if (players[playerId].player.team == players[currentId].player.team) {
-                                    spectatePlayer = players[playerId];
-                                    break;
-                                }
-                            }
-                        }
-                        if (spectatePlayer != undefined) {
-                            cameraPosition = {
-                                x: spectatePlayer.player.x - window.innerWidth / 2,
-                                y: spectatePlayer.player.y - window.innerHeight / 2
+                        let renderBullet = function(id) {
+                            let dom = bullets[id].dom;
+                            let bullet = bullets[id].bullet;
+                            let offset = {
+                                x: bullet.x - cameraPosition.x,
+                                y: bullet.y - cameraPosition.y
                             };
-                        } else {
-                            cameraPosition = {
-                                x: window.innerWidth / 2,
-                                y: window.innerHeight / 2
-                            };
+                            dom.style.left = (offset.x - uniOffset) + "px";
+                            dom.style.top = (offset.y - uniOffset) + "px";
                         }
-                    }
 
-                    document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
-                }
-
-                let sendMessage = function() {
-                    if (running) {
-                        if (room.state.players[currentId].name == "") {
-                            message = "Player" + ": " + document.getElementById("chatInput").value;
-                        } else {
-                            message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
-                        }
-                        document.getElementById("chatInput").value = "";
-                        room.send({id: "Message", data: message});
-                    }
-                }
-
-                let _keydown = function (e) {
-                    if (running) {
-                        if (document.getElementById("chatInput") != document.activeElement)
-                        room.send({id: "KeyDown", data:{key: e.which}});
-
-                        if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
-                            if (document.body.style.backgroundColor == "white") {
-                                document.body.style.backgroundColor = "black";
-                                divs = document.getElementsByClassName('player');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "5px solid White";
-                                    divs[i].style.color = "White";
-                                }
-                                divs = document.getElementsByClassName('obstacle');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "5px solid white";
-                                }
-                                divs = document.getElementsByClassName('bullet');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "1px solid white";
-                                }
-                                document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
-                                document.getElementById("chatArea").style.color = "white";
-                                document.getElementById("chatInput").style.color = "White";
-                                document.body.style.backgroundImage = "url('res/gridDark.png')";
+                        let moveCamera = function() {
+                            if (!players[currentId].player.dead) {
+                                cameraPosition = {
+                                    x: players[currentId].player.x - window.innerWidth / 2,
+                                    y: players[currentId].player.y - window.innerHeight / 2
+                                };
                             } else {
-                                document.body.style.backgroundColor = "white";
-                                divs = document.getElementsByClassName('player');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "5px solid black";
-                                    divs[i].style.color = "black";
+                                let spectatePlayer = undefined;
+                                for (let playerId in players) {
+                                    if (playerId != currentId) {
+                                        if (players[playerId].player.team == players[currentId].player.team) {
+                                            spectatePlayer = players[playerId];
+                                            break;
+                                        }
+                                    }
                                 }
-                                divs = document.getElementsByClassName('obstacle');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "5px solid black";
+                                if (spectatePlayer != undefined) {
+                                    cameraPosition = {
+                                        x: spectatePlayer.player.x - window.innerWidth / 2,
+                                        y: spectatePlayer.player.y - window.innerHeight / 2
+                                    };
+                                } else {
+                                    cameraPosition = {
+                                        x: window.innerWidth / 2,
+                                        y: window.innerHeight / 2
+                                    };
                                 }
-                                divs = document.getElementsByClassName('bullet');
-                                for (i = 0; i != divs.length; i++) {
-                                    divs[i].style.border = "1px solid black";
-                                }
-                                document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
-                                document.getElementById("chatArea").style.color = "black";
-                                document.getElementById("chatInput").style.color = "black";
-                                document.body.style.backgroundImage = "url('res/grid.png')";
                             }
-                        } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
-                            sendMessage();
+
+                            document.body.style.backgroundPosition = ((-cameraPosition.x) + "px " + (-cameraPosition.y) + "px");
                         }
-                    }
+
+                        let sendMessage = function() {
+                            if (running) {
+                                if (room.state.players[currentId].name == "") {
+                                    message = "Player" + ": " + document.getElementById("chatInput").value;
+                                } else {
+                                    message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
+                                }
+                                document.getElementById("chatInput").value = "";
+                                room.send({id: "Message", data: message});
+                            }
+                        }
+
+                        let _keydown = function (e) {
+                            if (running) {
+                                if (document.getElementById("chatInput") != document.activeElement)
+                                room.send({id: "KeyDown", data:{key: e.which}});
+
+                                if (e.which == 32 && document.getElementById("chatInput") != document.activeElement && document.getElementById("nameInput") != document.activeElement) {
+                                    if (document.body.style.backgroundColor == "white") {
+                                        document.body.style.backgroundColor = "black";
+                                        divs = document.getElementsByClassName('player');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "5px solid White";
+                                            divs[i].style.color = "White";
+                                        }
+                                        divs = document.getElementsByClassName('obstacle');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "5px solid white";
+                                        }
+                                        divs = document.getElementsByClassName('bullet');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "1px solid white";
+                                        }
+                                        document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
+                                        document.getElementById("chatArea").style.color = "white";
+                                        document.getElementById("chatInput").style.color = "White";
+                                        document.body.style.backgroundImage = "url('res/gridDark.png')";
+                                    } else {
+                                        document.body.style.backgroundColor = "white";
+                                        divs = document.getElementsByClassName('player');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "5px solid black";
+                                            divs[i].style.color = "black";
+                                        }
+                                        divs = document.getElementsByClassName('obstacle');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "5px solid black";
+                                        }
+                                        divs = document.getElementsByClassName('bullet');
+                                        for (i = 0; i != divs.length; i++) {
+                                            divs[i].style.border = "1px solid black";
+                                        }
+                                        document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
+                                        document.getElementById("chatArea").style.color = "black";
+                                        document.getElementById("chatInput").style.color = "black";
+                                        document.body.style.backgroundImage = "url('res/grid.png')";
+                                    }
+                                } if (e.which == 13 && document.getElementById("chatInput").value != "" && document.getElementById("chatInput") == document.activeElement) {
+                                    sendMessage();
+                                }
+                            }
+                        }
+
+                        window.addEventListener("keydown", _keydown);
+
+                        let _mousedown = function(e) {
+                            if (running)
+                            room.send({id: "MouseDown", data:{window: {x: window.innerWidth / 2, y: window.innerHeight / 2}, mouse: {x: e.x, y: e.y}}})
+                        }
+
+                        window.addEventListener("mousedown", _mousedown);
+
+                        let _keyup = function(e) {
+                            if (running)
+                            room.send({id: "KeyUp", data:{key: e.which}});
+                        }
+
+                        window.addEventListener("keyup", _keyup);
+
+                        let _resize = function() {
+                            if (running)
+                            room.state.players.onChange();
+                        }
+
+                        window.addEventListener('resize', _resize);
+
+                    }).catch(err => {
+                        console.log(err);
+                    });
                 }
-
-                window.addEventListener("keydown", _keydown);
-
-                let _mousedown = function(e) {
-                    if (running)
-                    room.send({id: "MouseDown", data:{window: {x: window.innerWidth / 2, y: window.innerHeight / 2}, mouse: {x: e.x, y: e.y}}})
-                }
-
-                window.addEventListener("mousedown", _mousedown);
-
-                let _keyup = function(e) {
-                    if (running)
-                    room.send({id: "KeyUp", data:{key: e.which}});
-                }
-
-                window.addEventListener("keyup", _keyup);
-
-                let _resize = function() {
-                    if (running)
-                    room.state.players.onChange();
-                }
-
-                window.addEventListener('resize', _resize);
-
-            }).catch(err => {
-                console.log(err);
             });
-        }
+        });
+
+
     </script>
   </body>
 </html>

@@ -1,6 +1,7 @@
 import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 import { User, verifyToken } from "@colyseus/social";
+const request = require('request');
 var rooms = new Array;
 var tokens = new Array;
 
@@ -407,29 +408,40 @@ export class GameRoom extends Room<State> {
             client.close();
         } else {
             tokens.push(user._id.toString());
-            this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
-            try {
-                console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-                if (this.state.players[client.sessionId].name == "") {
-                    this.broadcast(("Player Joined."));
-                } else {
-                    this.broadcast((this.state.players[client.sessionId].name + " Joined."));
-                }
-            } catch {
-                client.close();
-                this.state.removePlayer(client.sessionId);
-                console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
-            }
         }
+        // let exists = false;
+        // for (let i = 0; i < tokens.length; i++) {
+        //     if (user._id.toString() == tokens[i]) {
+        //         exists = true;
+        //     }
+        // }
+        // if (exists) {
+        //     client.close();
+        // } else {
+        //     tokens.push(user._id.toString());
+        //     this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
+        //     try {
+        //         console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+        //         if (this.state.players[client.sessionId].name == "") {
+        //             this.broadcast({id: "message", message: ("Player Joined.")});
+        //         } else {
+        //             this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Joined.")});
+        //         }
+        //     } catch {
+        //         client.close();
+        //         this.state.removePlayer(client.sessionId);
+        //         console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+        //     }
+        // }
     }
 
     onLeave (client) {
         try {
             console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[31mLeft.\x1b[37m");
             if (this.state.players[client.sessionId].name == "") {
-                this.broadcast(("Player Left."));
+                this.broadcast({id: "message", message: ("Player Left.")});
             } else {
-                this.broadcast((this.state.players[client.sessionId].name + " Left."));
+                this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Left.")});
             }
             for (let i = 0; i < tokens.length; i++) {
                 if (this.state.players[client.sessionId].userId == tokens[i]) {
@@ -445,6 +457,35 @@ export class GameRoom extends Room<State> {
         let data = packet.data;
 
         switch(id) {
+            case "verify": {
+                const request = require('request');
+                let options = packet.options;
+                let response = undefined;
+                request.post('https://www.google.com/recaptcha/api/siteverify?secret=6LfoZ7sUAAAAAKShCpebSwhUSsiMQ0P0eFsdHLn2&response=' + data, {json: {}}, (error, res, body) => {
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                    response = body;
+                    if (response.success) {
+                        this.state.createPlayer(client, options.name, options.colour, client.sessionId, client.auth._id);
+                        this.send(client, {id: "verify", message: true, player: this.state.players[client.sessionId]});
+                        try {
+                            console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+                            if (this.state.players[client.sessionId].name == "") {
+                                this.broadcast({id: "message", message: ("Player Joined.")});
+                            } else {
+                                this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Joined.")});
+                            }
+                        } catch {
+                            client.close();
+                            this.state.removePlayer(client.sessionId);
+                            console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+                        }
+                    }
+                });
+                break;
+            }
             case "KeyDown": {
                 switch(data.key) {
                     case 37:
@@ -539,7 +580,7 @@ export class GameRoom extends Room<State> {
             }
             case "Message": {
                 console.log(getTs(), "\x1b[34mMessage (" + this.roomId + "): \x1b[32m" + data + "\x1b[37m");
-                this.broadcast(data);
+                this.broadcast({id: "message", message: data});
                 break;
             }
         }
@@ -576,7 +617,7 @@ const commands = {
 
 process.on("SIGINT", function () {
     for (let room in rooms) {
-        rooms[room].broadcast("Server Stopped.");
+        rooms[room].broadcast({id: "message", message: "Server Stopped."});
     }
     console.log(getTs(), `\x1b[31mStopping!\x1b[37m`);
     process.exit();
@@ -591,7 +632,7 @@ stdin.on('data', function(data) {
     let command = data[0].toLowerCase();
     if (command == 'exit' || command == 'stop') {
         for (let room in rooms) {
-            rooms[room].broadcast("Server Stopped.");
+            rooms[room].broadcast({id: "message", message: "Server Stopped."});
         }
         console.log(getTs(), `\x1b[31mStopping!\x1b[37m`);
         process.exit();
@@ -602,7 +643,7 @@ stdin.on('data', function(data) {
                 message += data[i] + " ";
             }
             if (rooms[data[1]] != undefined) {
-                rooms[data[1]].broadcast("Server> " + message);
+                rooms[data[1]].broadcast({id: "message", message: "Server> " + message});
                 console.log(getTs(), "\x1b[34mBroadcast (" + rooms[data[1]].roomId + "): \x1b[32mServer> " + message + "\x1b[37m");
             } else {
                 console.log(getTs(), "\x1b[31mRoom does not exist.\x1b[37m")
@@ -617,7 +658,7 @@ stdin.on('data', function(data) {
                 message += data[i] + " ";
             }
             for (let room in rooms) {
-                rooms[room].broadcast("Server> " + message);
+                rooms[room].broadcast({id: "message", message: "Server> " + message});
             }
             console.log(getTs(), "\x1b[34mBroadcast: \x1b[32mServer> " + message + "\x1b[37m")
         } else {
@@ -626,7 +667,7 @@ stdin.on('data', function(data) {
     } else if (command == 'delroom') {
         if (data.length != 1) {
             if (rooms[data[1]] != undefined) {
-                rooms[data[1]].broadcast("Server Stopped.");
+                rooms[data[1]].broadcast({id: "message", message: "Server Stopped."});
                 rooms[data[1]].disconnect();
                 console.log(getTs(), "\x1b[32mRoom deleted.\x1b[37m")
                 rooms = rooms.splice(rooms[data[1]]);
@@ -641,9 +682,9 @@ stdin.on('data', function(data) {
             if (rooms[data[1]] != undefined) {
                 if (rooms[data[1]].state.clients[data[2]] != undefined) {
                     if (rooms[data[1]].state.players[data[2]].name == "") {
-                        rooms[data[1]].broadcast("Player was kicked.");
+                        rooms[data[1]].broadcast({id: "message", message: "Player was kicked."});
                     } else {
-                        rooms[data[1]].broadcast(rooms[data[1]].state.players[data[2]].name + " was kicked.");
+                        rooms[data[1]].broadcast({id: "message", message: rooms[data[1]].state.players[data[2]].name + " was kicked."});
                     }
                     delete rooms[data[1]].state.players[data[2]];
                     console.log(getTs(), "\x1b[32mClient kicked.\x1b[37m")
