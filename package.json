@@ -14,7 +14,7 @@
   "license": "",
   "dependencies": {
     "@colyseus/monitor": "^0.11.0",
-    "@colyseus/social": "^0.11.4",
+    "@colyseus/social": "^0.11.5",
     "colyseus": "^0.11.15",
     "colyseus.js": "^0.11.2",
     "cors": "^2.8.5",

@@ -531,6 +531,38 @@ export class GameRoom extends Room<State> {
             client.close();
         } else {
             tokens.push(user._id.toString());
+            const request = require('request');
+            let response = undefined;
+            request.post('https://www.google.com/recaptcha/api/siteverify?secret=6LfoZ7sUAAAAAKShCpebSwhUSsiMQ0P0eFsdHLn2&response=' + options.data, {json: {}}, (error, res, body) => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                response = body;
+                if (response.success) {
+                    this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
+                    try {
+                        console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
+                        if (this.state.players[client.sessionId].name == "") {
+                            this.broadcast({id: "message", message: ("Player Joined.")});
+                        } else {
+                            this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Joined.")});
+                        }
+                    } catch {
+                        client.close();
+                        this.state.removePlayer(client.sessionId);
+                        console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
+                    }
+                } else {
+                    this.send(client, {id: "verify", message: false});
+                    client.close();
+                    for (let i = 0; i < tokens.length; i++) {
+                        if (user._id.toString() == tokens[i]) {
+                            tokens.splice(i, 1);
+                        }
+                    }
+                }
+            });
         }
     }
 
@@ -560,42 +592,6 @@ export class GameRoom extends Room<State> {
         let data = packet.data;
 
         switch(id) {
-            case "verify": {
-                const request = require('request');
-                let options = packet.options;
-                let response = undefined;
-                request.post('https://www.google.com/recaptcha/api/siteverify?secret=6LfoZ7sUAAAAAKShCpebSwhUSsiMQ0P0eFsdHLn2&response=' + data, {json: {}}, (error, res, body) => {
-                    if (error) {
-                        console.error(error);
-                        return;
-                    }
-                    response = body;
-                    if (response.success) {
-                        this.state.createPlayer(client, options.name, options.colour, client.sessionId, client.auth._id);
-                        try {
-                            console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
-                            if (this.state.players[client.sessionId].name == "") {
-                                this.broadcast({id: "message", message: ("Player Joined.")});
-                            } else {
-                                this.broadcast({id: "message", message: (this.state.players[client.sessionId].name + " Joined.")});
-                            }
-                        } catch {
-                            client.close();
-                            this.state.removePlayer(client.sessionId);
-                            console.log(getTs(), "\x1b[31mPlayer joined with bad data.\x1b[37m");
-                        }
-                    } else {
-                        this.send(client, {id: "verify", message: false});
-                        client.close();
-                        for (let i = 0; i < tokens.length; i++) {
-                            if (client.auth._id == tokens[i]) {
-                                tokens.splice(i, 1);
-                            }
-                        }
-                    }
-                });
-                break;
-            }
             case "KeyDown": {
                 switch(data.key) {
                     case 37:

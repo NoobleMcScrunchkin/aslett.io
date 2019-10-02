@@ -10,6 +10,8 @@ import { GameRoom } from "./rooms/GameRoom";
 const port = Number(process.env.PORT || 80) + Number(process.env.NODE_APP_INSTANCE || 0);
 const app = express();
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 app.use("/", socialRoutes);
 app.use(cors());
 app.use(express.json());
