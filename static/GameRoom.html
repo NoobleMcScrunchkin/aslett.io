@@ -1,147 +1,42 @@
 <!DOCTYPE html>
-<!-- Flags made by smashicons -->
-
 <html>
   <head>
-    <meta name="viewport" content="width=device-width" />
-
-    <style>
-      body { font-family: Tahoma, Geneva, sans-serif; text-align: center; }
-    </style>
-
-    <style type="text/css">
-        .player {
-            width: 100px;
-            height: 100px;
-            position: absolute;
-            z-index: 0;
-            border-radius: 50%;
-            border: 5px solid black;
-            padding-top: 24px;
-            box-sizing: border-box;
-            left: 0;
-            top: 0;
-        }
-        .obstacle {
-            position: absolute;
-            z-index: -1;
-            border: 5px solid black;
-        }
-        .bullet {
-            position: absolute;
-            border-radius: 50%;
-            z-index: -2;
-            background: black;
-            width: 10px;
-            height: 10px;
-            border: 1px solid black;
-        }
-        .flag {
-            position: absolute;
-            z-index: 5;
-            width: 80px;
-            height: 80px;
-        }
-        #nameArea {
-            display: flex;
-            position: relative;
-            z-index: 0;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        #nameInput {
-            width: 30%;
-            border: none;
-            margin-top: 10px;
-            border-bottom: 2px solid black;
-            font-size: 20px;
-            outline: 0;
-            text-align: center;
-            background: none;
-        }
-        .colourButton {
-            width: 100px;
-            height: 100px;
-            margin-top: 1%;
-            border-radius: 50%;
-            border: 5px solid black;
-            margin: 5px;
-        }
-        #colourButtonRed {
-            background: red;
-            float: left;
-        }
-        #colourButtonBlue {
-            background: blue;
-            float: left;
-        }
-        #error {
-            font-family: Tahoma, Geneva, sans-serif;
-            font-size: 16px;
-            pointer-events: none;
-            vertical-align: middle;
-            text-align: center;
-            color: red;
-        }
-        #respawn {
-            font-family: Tahoma, Geneva, sans-serif;
-            font-size: 16px;
-            pointer-events: none;
-            vertical-align: middle;
-            text-align: center;
-            color: grey;
-        }
-        #scores {
-            font-size: 2em;
-        }
-        #scoresR {
-            color: red;
-        }
-        #scoresB {
-            color: blue;
-        }
-        body {
-            overflow: hidden;
-            background-position: 0px 0px;
-            background-repeat: repeat;
-            background-image: url('res/grid.png');
-        }
-    </style>
-    <script src="res/jquery.js"></script>
-    <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv"></script>
-    <script>
-        var currentColour = "";
-    </script>
+      <meta charset="utf-8">
+      <title>aslett.io</title>
+      <meta name="viewport" content="width=device-width" />
+      <meta content="Webflow" name="generator">
+      <link href="/res/styles.css" rel="stylesheet" type="text/css">
+      <script src="res/jquery.js" type="text/javascript"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js" type="text/javascript"></script>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Changa+One:400,400italic" media="all">
+      <script type="text/javascript">WebFont.load({  google: {    families: ["Changa One:400,400italic"]  }});</script>
+      <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
+      <script src="https://www.google.com/recaptcha/api.js?render=6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv"></script>
+      <script>
+          var currentColour = "";
+      </script>
   </head>
-  <body style="background-color: white;">
-      <b id="scores" hidden>
-          <span id="scoresR"></span>-<span id="scoresB"></span>
-      </b>
+  <body class="body" style="background-color: white;">
+      <div id="scores" class="scores" hidden>
+          <span id="scoresR" style="color: red"></span>-<span id="scoresB" style="color: blue"></span>
+      </div>
       <div id="nameArea">
           <b id="respawn"></b>
           <b id="error"></b>
-          <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16" hidden>
+          <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
           <div id="colours">
-              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; try { startGame(); } catch {}" hidden>
+              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; try { startGame(); } catch {}">
                   <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Red Team!</b>
               </button>
-              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; try { startGame(); } catch {}" hidden>
+              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; try { startGame(); } catch {}">
                   <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Blue Team!</b>
               </button>
           </div>
       </div>
-      <div style="float: left; position: fixed; top: 0px; left: 0px; width: 20%; height: 100%; background: rgba(0,0,0,0.25)" id="chatArea" hidden=true>
-          <input type="text" onclick="if (this.value == 'Chat') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Chat'}" style="outline: 0; font-size: 16px; background: none; border: none; border-bottom: 1px solid white; box-sizing:border-box; display: relative; width: 95%; padding: 5px; margin-top: 3px" id="chatInput" value="Chat">
+      <div id="chatArea" class="chatarea" hidden>
+          <div>
+              <input type="text" class="chatinput w-input" name="chatInput" id="chatInput" placeholder="Chat">
+          </div>
       </div>
     <script>
         document.body.style.height = window.innerHeight;
@@ -181,7 +76,7 @@
                             document.getElementById("error").hidden = true;
                             document.getElementById("respawn").hidden = true;
                             let room = room_instance
-                            // room.send({id: "verify", data: token, options: {name: this.name, colour: currentColour}});
+
                             let players = {};
                             let obstacles = {};
                             let bullets = {};
@@ -221,15 +116,16 @@
                                     dom.style.height = "80px";
 
                                     if (flag.team == "red") {
-                                        dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(30deg); width: 80px; height: 80px;">';
+                                        dom.innerHTML = '<img src="res/flagR.png">';
                                     } else {
-                                        dom.innerHTML = '<img src="res/flag.svg" style="filter: invert() brightness(0.5) sepia(1) saturate(10000%) hue-rotate(270deg); width: 80px; height: 80px;">';
+                                        dom.innerHTML = '<img src="res/flagB.png">';
                                     }
 
                                     flags[id] = {
                                         dom: dom,
                                         flag: flag
                                     };
+
                                     document.body.appendChild(flags[id].dom);
                                     room.state.flags.onChange();
                                 }
@@ -254,9 +150,15 @@
                                     dom.className = "obstacle";
                                     dom.style.top = obstacle.y + "px";
                                     dom.style.left = obstacle.y + "px";
-                                    dom.style.width = obstacle.w - (border * 2) + "px";
-                                    dom.style.height = obstacle.h - (border * 2) + "px";
-                                    dom.style.background = obstacle.colour;
+                                    dom.style.width = obstacle.w + "px";
+                                    dom.style.height = obstacle.h + "px";
+                                    if (obstacle.colour == "red") {
+                                        dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, red, #9d0000)";
+                                    } else if (obstacle.colour == "blue") {
+                                        dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, #00f, #00009d)";
+                                    } else if (obstacle.colour == "grey") {
+                                        dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, #bdbdbd, #555)";
+                                    }
                                     obstacles[id] = {
                                         obstacle: obstacle,
                                         dom: dom
@@ -309,6 +211,11 @@
                                     domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
                                     domb.textContent = player.name;
                                     dom.style.background = player.colour;
+                                    if (player.colour == "#FF0000") {
+                                        dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, red, #9d0000)";
+                                    } else if (player.colour == "#0000FF") {
+                                        dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, #00f, #00009d)";
+                                    }
                                     if (document.body.style.backgroundColor == "white") {
                                         dom.style.border = "5px solid black";
                                     } else {
@@ -340,6 +247,9 @@
                                     for (let id in bullets) {
                                         document.body.removeChild(bullets[id].dom);
                                     }
+                                    for (let id in flags) {
+                                        document.body.removeChild(flags[id].dom);
+                                    }
                                     $('.chat').remove();
                                     players = undefined;
                                     obstacles = undefined;
@@ -354,6 +264,7 @@
                                     document.getElementById("nameInput").value = "Enter a name";
                                     document.getElementById("chatArea").hidden = true;
                                     document.getElementById("nameArea").hidden = false;
+                                    document.getElementById("scores").hidden = true;
                                     document.getElementById("nameInput").hidden = false;
                                     document.getElementById("error").hidden = false;
                                     document.getElementById("colourButtonRed").hidden = false;
@@ -497,11 +408,7 @@
 
                             let sendMessage = function() {
                                 if (running) {
-                                    if (room.state.players[currentId].name == "") {
-                                        message = "Player" + ": " + document.getElementById("chatInput").value;
-                                    } else {
-                                        message = room.state.players[currentId].name + ": " + document.getElementById("chatInput").value;
-                                    }
+                                    message = document.getElementById("chatInput").value;
                                     document.getElementById("chatInput").value = "";
                                     room.send({id: "Message", data: message});
                                 }
@@ -530,6 +437,7 @@
                                             }
                                             document.getElementById("chatArea").style.background = "rgba(255,255,255,0.25)";
                                             document.getElementById("chatArea").style.color = "white";
+                                            document.getElementById("respawn").style.color = "lightgrey";
                                             document.getElementById("chatInput").style.color = "White";
                                             document.body.style.backgroundImage = "url('res/gridDark.png')";
                                         } else {
@@ -549,6 +457,7 @@
                                             }
                                             document.getElementById("chatArea").style.background = "rgba(0,0,0,0.25)";
                                             document.getElementById("chatArea").style.color = "black";
+                                            document.getElementById("respawn").style.color = "grey";
                                             document.getElementById("chatInput").style.color = "black";
                                             document.body.style.backgroundImage = "url('res/grid.png')";
                                         }
@@ -588,8 +497,6 @@
                 }
             });
         });
-
-
     </script>
   </body>
 </html>

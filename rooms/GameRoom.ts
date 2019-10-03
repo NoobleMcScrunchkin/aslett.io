@@ -6,19 +6,19 @@ var rooms = new Array;
 var tokens = new Array;
 
 var map = [
-{type: "obstacle", x: -10, y: -10, w: 4010, h: 10, colour: "#000000", solid: true},
-{type: "obstacle", x: 4000, y: -10, w: 10, h: 4020, colour: "#000000", solid: true},
-{type: "obstacle", x: -10, y: -10, w: 10, h: 4010, colour: "#000000", solid: true},
-{type: "obstacle", x: -10, y: 4000, w: 4010, h: 10, colour: "#000000", solid: true},
-{type: "obstacle", x: 200, y: 200, w: 100, h: 100, colour: "#FF0000", solid: true},
-{type: "obstacle", x: 400, y: 400, w: 100, h: 100, colour: "#FF0000", solid: true},
-{type: "obstacle", x: 600, y: 200, w: 400, h: 100, colour: "#0000FF", solid: true},
+{type: "obstacle", x: -10, y: -10, w: 4010, h: 10, colour: "black", solid: true},
+{type: "obstacle", x: 4000, y: -10, w: 10, h: 4020, colour: "black", solid: true},
+{type: "obstacle", x: -10, y: -10, w: 10, h: 4010, colour: "black", solid: true},
+{type: "obstacle", x: -10, y: 4000, w: 4010, h: 10, colour: "black", solid: true},
+{type: "obstacle", x: 200, y: 200, w: 100, h: 100, colour: "red", solid: true},
+{type: "obstacle", x: 400, y: 400, w: 100, h: 100, colour: "red", solid: true},
+{type: "obstacle", x: 600, y: 200, w: 400, h: 100, colour: "blue", solid: true},
 {type: "rSpawn", x: 5, y: 5},
 {type: "bSpawn", x: 600, y: 5},
 {type: "flag", x: 15, y: 15, team: "red"},
 {type: "flag", x: 410, y: 15, team: "blue"},
-{type: "obstacle", x: 5, y: 5, w: 100, h: 100, colour: "#e1e1e1", solid: false},
-{type: "obstacle", x: 400, y: 5, w: 100, h: 100, colour: "#e1e1e1", solid: false},
+{type: "obstacle", x: 5, y: 5, w: 100, h: 100, colour: "grey", solid: false},
+{type: "obstacle", x: 400, y: 5, w: 100, h: 100, colour: "grey", solid: false},
 ];
 
 function collides (rect, circle, collide_inside)
@@ -128,6 +128,9 @@ export class Player extends Schema {
         this.originX = this.x;
         this.originY = this.y;
         this.name = name.substring(0, 16);
+        if (!this.name.replace(/\s/g, '').length) {
+            this.name = "";
+        }
         this.colour = "#" + colour;
     }
 
@@ -685,8 +688,14 @@ export class GameRoom extends Room<State> {
                 break;
             }
             case "Message": {
-                console.log(getTs(), "\x1b[34mMessage (" + this.roomId + "): \x1b[32m" + data + "\x1b[37m");
-                this.broadcast({id: "message", message: data});
+                let message = "";
+                if (this.state.players[client.sessionId].name != "") {
+                    message = this.state.players[client.sessionId].name + ": " + data;
+                } else {
+                    message = "Player: " + data;
+                }
+                console.log(getTs(), "\x1b[34mMessage (" + this.roomId + "): \x1b[32m" + message + "\x1b[37m");
+                this.broadcast({id: "message", message: message});
                 break;
             }
         }
@@ -794,6 +803,15 @@ stdin.on('data', function(data) {
                         rooms[data[1]].broadcast({id: "message", message: "Player was kicked."});
                     } else {
                         rooms[data[1]].broadcast({id: "message", message: rooms[data[1]].state.players[data[2]].name + " was kicked."});
+                    }
+                    for (let i = 0; i < tokens.length; i++) {
+                        if (rooms[data[1]].state.players[data[2]].userId == tokens[i]) {
+                            tokens.splice(i, 1);
+                        }
+                    }
+                    if (rooms[data[1]].state.players[data[2]].flag != undefined) {
+                        rooms[data[1]].state.players[data[2]].flag.taken = false;
+                        rooms[data[1]].state.players[data[2]].flag = undefined;
                     }
                     delete rooms[data[1]].state.players[data[2]];
                     console.log(getTs(), "\x1b[32mClient kicked.\x1b[37m")

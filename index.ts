@@ -26,8 +26,14 @@ gameServer.define("Game", GameRoom);
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/static/GameRoom.html'));
 });
-app.get('/res/flag.svg', function(req, res) {
-    res.sendFile(path.join(__dirname + '/res/flag.svg'));
+app.get('/res/styles.css', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/styles.css'));
+});
+app.get('/res/flagR.png', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/flagR.png'));
+});
+app.get('/res/flagB.png', function(req, res) {
+    res.sendFile(path.join(__dirname + '/res/flagB.png'));
 });
 app.get('/res/grid.png', function(req, res) {
     res.sendFile(path.join(__dirname + '/res/grid.png'));
