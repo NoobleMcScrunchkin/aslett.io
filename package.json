@@ -2,6 +2,8 @@
   "name": "aslett.io",
   "version": "1.0.0",
   "description": "CTF",
+  "repository": "https://www.github.com/nooblemcscrunchkin/aslett.io",
+  "license": "ISC",
   "main": "index.js",
   "scripts": {
     "start": "ts-node index.ts",
@@ -11,7 +13,6 @@
     "node": "8.9.1"
   },
   "author": "",
-  "license": "",
   "dependencies": {
     "@colyseus/monitor": "^0.11.0",
     "@colyseus/social": "^0.11.5",
