@@ -25,10 +25,10 @@
           <b id="error"></b>
           <input id="nameInput" value="Enter a name" onclick="if (this.value == 'Enter a name') {this.value = ''}" onblur="if (this.value == '') {this.value = 'Enter a name'}" maxlength="16">
           <div id="colours">
-              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'FF0000'; try { startGame(); } catch {}">
+              <button id="colourButtonRed" class="colourButton" onclick="currentColour = 'red'; try { startGame(); } catch {}">
                   <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Red Team!</b>
               </button>
-              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = '0000FF'; try { startGame(); } catch {}">
+              <button id="colourButtonBlue" class="colourButton" onclick="currentColour = 'blue'; try { startGame(); } catch {}">
                   <b style="font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;">Join Blue Team!</b>
               </button>
           </div>
@@ -45,7 +45,7 @@
         var running = 0;
 
         grecaptcha.ready(function() {
-            grecaptcha.execute('6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv', {action:'homepage'}).then(function(token) {
+            grecaptcha.execute('6LfoZ7sUAAAAAJ5nN2z7Z5BmT730T4JLfVsCIrBv', {action:'login'}).then(function(token) {
                 if (!running) {
                     document.getElementById("nameInput").hidden = false;
                     document.getElementById("colourButtonRed").hidden = false;
@@ -61,8 +61,8 @@
                         name = document.getElementById("nameInput").value;
                         if (name == "Enter a name")
                         name = "";
-                        if (currentColour != "FF0000" || currentColour != "0000FF") {
-                            currentColour == "FF0000";
+                        if (currentColour != "red" || currentColour != "blue") {
+                            currentColour == "red";
                         }
                         running = 1;
                         this.name = name;
@@ -211,9 +211,9 @@
                                     domb.style = "font-family: Tahoma, Geneva, sans-serif; font-size: 16px; pointer-events: none; vertical-align: middle; text-align: center;";
                                     domb.textContent = player.name;
                                     dom.style.background = player.colour;
-                                    if (player.colour == "#FF0000") {
+                                    if (player.colour == "red") {
                                         dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, red, #9d0000)";
-                                    } else if (player.colour == "#0000FF") {
+                                    } else if (player.colour == "blue") {
                                         dom.style.backgroundImage = "radial-gradient(circle farthest-corner at 50% 50%, #00f, #00009d)";
                                     }
                                     if (document.body.style.backgroundColor == "white") {

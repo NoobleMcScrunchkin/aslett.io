@@ -116,7 +116,7 @@ export class Player extends Schema {
         this.userId = userId;
         this.id = id;
         this.state = state;
-        if (colour == "FF0000") {
+        if (colour == "red") {
             this.team = "red";
             this.x = this.state.spawn.r.x;
             this.y = this.state.spawn.r.y;
@@ -131,7 +131,7 @@ export class Player extends Schema {
         if (!this.name.replace(/\s/g, '').length) {
             this.name = "";
         }
-        this.colour = "#" + colour;
+        this.colour = colour;
     }
 
     movePlayer() {
@@ -442,13 +442,12 @@ export class State extends Schema {
     }
 
     createPlayer (client: Client, name: string, colour: string, id: string, userId: string) {
-        if(colour == "FF0000" || colour == "0000FF") {
+        if(colour == "red" || colour == "blue") {
             this.players[client.sessionId] = new Player(name, colour, this, client.sessionId, userId);
-            this.clients[client.sessionId] = client;
         } else {
-            this.players[client.sessionId] = new Player(name, "FF0000", this, client.sessionId, userId);
-            this.clients[client.sessionId] = client;
+            this.players[client.sessionId] = new Player(name, "red", this, client.sessionId, userId);
         }
+        this.clients[client.sessionId] = client;
     }
 
     removePlayer (id: string) {
@@ -542,7 +541,7 @@ export class GameRoom extends Room<State> {
                     return;
                 }
                 response = body;
-                if (response.success) {
+                if (response.success && response.action == "login") {
                     this.state.createPlayer(client, options.name, options.colour, client.sessionId, user._id.toString());
                     try {
                         console.log(getTs(), "\x1b[31m" + client.sessionId + "\x1b[37m ('\x1b[32m" + this.state.players[client.sessionId].name + "\x1b[37m') \x1b[34mJoined.\x1b[37m");
